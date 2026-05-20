@@ -1,0 +1,19 @@
+{
+  "candidate_id": "candidate-paper-market_open-001",
+  "review_id": "review-candidate-paper-market_open-001",
+  "reviewer": "soak-run-1-reviewer",
+  "review_status": "HUMAN_REVIEW_APPROVED_FOR_PAPER_REQUEST",
+  "review_notes": "",
+  "paper_only_confirmation": true,
+  "no_live_trading_confirmation": true,
+  "risk_review_confirmation": true,
+  "evaluation_review_confirmation": true,
+  "negative_case_review_confirmation": true,
+  "journal_review_confirmation": true,
+  "final_status": "HUMAN_REVIEW_APPROVED_FOR_PAPER_REQUEST",
+  "reason": "Human reviewed candidate for future Paper Order Request finalization only.",
+  "finalized_paper_order_request_created": false,
+  "manual_execution_confirmation_created": false,
+  "order_sent": false,
+  "broker_execution_readiness": false
+}

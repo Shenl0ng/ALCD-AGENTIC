@@ -1,0 +1,60 @@
+# Paper Order Request Candidate
+
+## Summary
+
+- Symbol: SIM
+- Decision: TRADE_PROPOSAL
+- Candidate status: PAPER_ORDER_CANDIDATE_CREATED
+- Proposal reference: paper-market_open-001
+- Strategy evaluation status: PASS
+- Evaluation gate status: EVALUATION_GATE_PASSED
+- Negative Case Regression status: PASS
+- Risk dry-run status: RISK_APPROVED
+- Journal reference: automated-dry-run-journal
+- paper_trading_only: true
+- human_approval_required: true
+- manual_execution_confirmation_required: true
+- broker_execution_allowed: false
+- live_trading_allowed: false
+- Final status: PAPER_ORDER_CANDIDATE_CREATED
+- Reason: Paper Order Request Candidate created for later human review only.
+
+## Candidate
+
+```json
+{
+  "candidate_id": "candidate-paper-market_open-001",
+  "created_at": "2026-05-20T15:49:21Z",
+  "symbol": "SIM",
+  "proposal_id": "paper-market_open-001",
+  "strategy_evaluation_reference": "strategy-evaluation-paper-market_open-001",
+  "evaluation_gate_reference": "evaluation-gate-paper-market_open-001",
+  "negative_case_regression_reference": "negative-case-regression-pass",
+  "risk_dry_run_reference": "risk-dry-run-paper-market_open-001",
+  "journal_reference": "automated-dry-run-journal",
+  "proposed_side": "long",
+  "proposed_order_type": "limit",
+  "proposed_time_in_force": "day",
+  "proposed_notional": "100",
+  "proposed_quantity": null,
+  "proposed_limit_price": "100",
+  "stop_loss": "98",
+  "target_1": "104",
+  "target_2": "106",
+  "thesis": "SIM paper-only long tests a reclaimed 100.00 prior-session low after failed downside liquidity.",
+  "invalidation": "A 15-minute close below 98.00 invalidates the reclaimed-low thesis.",
+  "paper_trading_only": true,
+  "human_approval_required": true,
+  "manual_execution_confirmation_required": true,
+  "broker_execution_allowed": false,
+  "live_trading_allowed": false,
+  "candidate_status": "PAPER_ORDER_CANDIDATE_CREATED"
+}
+```
+
+## Safety
+
+No order was sent.
+No finalized Paper Order Request was created.
+No broker execution readiness was created.
+Live trading remains unsupported.
