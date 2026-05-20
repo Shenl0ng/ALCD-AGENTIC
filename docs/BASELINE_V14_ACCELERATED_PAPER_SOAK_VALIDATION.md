@@ -114,6 +114,9 @@ V14 proves the system can submit one controlled automated Alpaca paper order dur
 - Reconciliation: reports/one_real_automated_paper_send/20260520T163514Z/RECONCILIATION.md
 - Post-send safety: reports/one_real_automated_paper_send/20260520T163514Z/POST_SEND_SAFETY.md
 - Post-mortem: reports/one_real_automated_paper_send/20260520T163514Z/POST_MORTEM.md
+- V10 full pipeline dry-run regression artifact: reports/v10_full_pipeline_dry_run_regression/20260520T163339Z/V10_FULL_PIPELINE_DRY_RUN_REGRESSION_REPORT.md
+- Automated paper send mocked regression artifact: reports/automated_paper_send_mocked_regression/20260520T163357Z/AUTOMATED_PAPER_SEND_MOCKED_REGRESSION_REPORT.md
+- Negative Case Regression artifact: reports/negative_case_regression/20260520T163433Z/NEGATIVE_CASE_REGRESSION_REPORT.md
 - Soak run registry: reports/automated_paper_send_soak/20260520T163608Z/SOAK_RUN_REGISTRY.md
 - Soak daily limits: reports/automated_paper_send_soak/20260520T163608Z/SOAK_DAILY_LIMITS.md
 - Soak quality review: reports/automated_paper_send_soak/20260520T163608Z/SOAK_QUALITY_REVIEW.md
