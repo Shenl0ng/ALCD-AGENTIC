@@ -1,0 +1,11 @@
+{
+  "journal_reference": "automated-dry-run-journal",
+  "symbol": "SIM",
+  "mode": "DRY_RUN_ONLY",
+  "decision": "TRADE_PROPOSAL",
+  "final_status": "AUTOMATED_DRY_RUN_PROPOSAL_CREATED",
+  "reason": "Dry-run trade proposal created; no approval, request, or send is authorized.",
+  "paper_order_request_created": false,
+  "paper_send_readiness": false,
+  "broker_execution_readiness": false
+}

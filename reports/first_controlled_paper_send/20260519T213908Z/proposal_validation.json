@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "violations": [],
+  "proposal_id": "paper-market_open-001",
+  "symbol": "SIM",
+  "side": "buy",
+  "notional": "100",
+  "order_type": "limit",
+  "time_in_force": "day"
+}

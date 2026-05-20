@@ -1,0 +1,11 @@
+{
+  "journal_reference": "automated-dry-run-journal",
+  "symbol": "SIM",
+  "mode": "DRY_RUN_ONLY",
+  "decision": "REJECT",
+  "final_status": "AUTOMATED_DRY_RUN_REJECTED",
+  "reason": "Setup rejected by automated dry-run analysis.",
+  "paper_order_request_created": false,
+  "paper_send_readiness": false,
+  "broker_execution_readiness": false
+}

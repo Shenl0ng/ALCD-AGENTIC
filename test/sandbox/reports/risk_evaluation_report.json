@@ -1,0 +1,10 @@
+{
+  "decision": "RISK_APPROVED",
+  "rejection_reasons": [],
+  "proposal_validation": {
+    "status": "PASS",
+    "violations": []
+  },
+  "executable": false,
+  "paper_mode_label": "Paper Mode: REQUIRED"
+}

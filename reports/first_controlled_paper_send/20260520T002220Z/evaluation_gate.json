@@ -1,0 +1,36 @@
+{
+  "gate": {
+    "proposal_id": "paper-market_open-001",
+    "status": "EVALUATION_GATE_PASSED",
+    "score": 2.85,
+    "adlc_status": "PASS",
+    "data_integrity_status": "PASS",
+    "journal_reference": "journal-evaluation-gate",
+    "dimensions_passed": [
+      "higher_timeframe_context_quality",
+      "liquidity_location_quality",
+      "session_timing_quality",
+      "entry_confirmation_quality",
+      "fixed_risk_quality",
+      "reward_risk_quality",
+      "journal_readiness",
+      "data_freshness",
+      "data_completeness",
+      "specialist_agent_sequencing",
+      "risk_manager_decision_quality"
+    ]
+  },
+  "journal_entry": {
+    "timestamp": "2026-05-20T00:00:00+00:00",
+    "proposal_id": "paper-market_open-001",
+    "event_type": "evaluation_gate_passed",
+    "gate_status": "EVALUATION_GATE_PASSED",
+    "score_summary": "score=2.85",
+    "hard_fail_reasons": [],
+    "reason_for_final_decision": "EVALUATION_GATE_PASSED",
+    "lessons_or_notes": "Evaluation gate completed; no order action was taken."
+  },
+  "human_review_before_gate_without_pass": "BLOCKED_BY_TESTS",
+  "paper_order_request_without_gate": "BLOCKED_BY_TESTS",
+  "paper_send_without_gate": "BLOCKED_BY_TESTS"
+}

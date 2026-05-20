@@ -1,0 +1,22 @@
+{
+  "mode": "REAL_ALPACA_PAPER_SEND",
+  "paper_execution_enabled": true,
+  "alpaca_account_mode": "PAPER",
+  "live_endpoint_rejected": true,
+  "proposal_validation": "PASS",
+  "strategy_evaluation_status": "PASS",
+  "evaluation_gate_status": "EVALUATION_GATE_PASSED",
+  "risk_approval": "RISK_APPROVED",
+  "human_approval": "HUMAN_APPROVED_FOR_PAPER_ONLY",
+  "manual_execution_confirmation": "MANUAL_EXECUTION_CONFIRMED_FOR_PAPER_ONLY",
+  "journal_commit_exists_before_send": true,
+  "preflight": "PAPER_ORDER_SEND_ALLOWED",
+  "max_notional_lte_100": true,
+  "order_type": "limit",
+  "time_in_force": "day",
+  "no_short_selling": true,
+  "no_crypto": true,
+  "no_options": true,
+  "no_margin_leverage": true,
+  "extended_hours_disabled": true
+}

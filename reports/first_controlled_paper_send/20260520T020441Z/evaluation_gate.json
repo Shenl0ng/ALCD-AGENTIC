@@ -1,0 +1,22 @@
+{
+  "proposal_id": "paper-market_open-001",
+  "status": "EVALUATION_GATE_PASSED",
+  "score": 2.85,
+  "adlc_status": "PASS",
+  "data_integrity_status": "PASS",
+  "journal_reference": "phase-25-evaluation-journal",
+  "soft_warning_reasons": [],
+  "dimensions_passed": [
+    "higher_timeframe_context_quality",
+    "liquidity_location_quality",
+    "session_timing_quality",
+    "entry_confirmation_quality",
+    "fixed_risk_quality",
+    "reward_risk_quality",
+    "journal_readiness",
+    "data_freshness",
+    "data_completeness",
+    "specialist_agent_sequencing",
+    "risk_manager_decision_quality"
+  ]
+}

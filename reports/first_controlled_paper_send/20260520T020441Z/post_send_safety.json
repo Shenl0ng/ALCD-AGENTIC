@@ -1,0 +1,16 @@
+{
+  "account_state_checked": true,
+  "position_state_checked": true,
+  "follow_up_orders_created": false,
+  "cancel_replace_used": false,
+  "live_trading_touched": false,
+  "execution_flag_disabled_after_test": true,
+  "returned_to_dry_run_only": true,
+  "secrets_printed": false,
+  "automation_introduced": false,
+  "notional_increase_occurred": false,
+  "frequency_increase_occurred": false,
+  "what_worked": "Phase 25 gates completed and paper send path either submitted or safely blocked.",
+  "what_failed": "none",
+  "must_fix_before_next_send": "Run full V3 gates again; do not increase notional or automate."
+}

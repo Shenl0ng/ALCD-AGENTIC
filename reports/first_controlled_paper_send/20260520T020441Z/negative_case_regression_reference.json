@@ -1,0 +1,16 @@
+{
+  "negative_case_regression_reference": "reports/negative_case_regression/20260520T015950Z/NEGATIVE_CASE_REGRESSION_REPORT.md",
+  "negative_case_regression_pass": true,
+  "no_negative_case_paper_send_readiness": true,
+  "no_negative_case_broker_execution_readiness": true,
+  "proposal_matches_known_negative_case_failure_patterns": false,
+  "proposal_is_weak_setup": false,
+  "proposal_is_forced_trade": false,
+  "proposal_is_rubber_stamped": false,
+  "specific_higher_timeframe_context": true,
+  "specific_liquidity_location": true,
+  "observable_confirmation": true,
+  "fixed_risk": true,
+  "credible_invalidation": true,
+  "journal_ready_thesis": true
+}

@@ -1,0 +1,11 @@
+{
+  "date": "2026-05-19",
+  "mode": "REAL_ALPACA_PAPER_SEND",
+  "paper_execution_enabled": true,
+  "alpaca_account_mode": "PAPER",
+  "live_endpoint_rejected": true,
+  "max_notional_lte_100": true,
+  "limit_order_only": true,
+  "time_in_force_day": true,
+  "no_short_crypto_options_margin_extended": true
+}

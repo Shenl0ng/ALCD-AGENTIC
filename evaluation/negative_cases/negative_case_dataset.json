@@ -1,0 +1,596 @@
+[
+  {
+    "case_id": "NC-001",
+    "category": "No-trade should be preferred",
+    "input_summary": "Price is near the watchlist area but has not reached the planned liquidity location.",
+    "agent_outputs": {
+      "market_context": "Context is incomplete until price interacts with the planned area.",
+      "liquidity": "Nearby level exists, but no sweep, reclaim, or clear reaction is present.",
+      "confirmation": "No observable entry confirmation.",
+      "risk_manager": "Risk can be defined, but setup quality is insufficient."
+    },
+    "expected_decision": "NO_TRADE",
+    "expected_gate_status": "NO_TRADE_RECORDED",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Price has not reached the relevant liquidity location.",
+    "expected_journal_note": "No-trade recorded because entry evidence did not form at the planned level.",
+    "why_no_trade_is_correct": "Waiting preserves capital when the setup is only nearby, not active.",
+    "prohibited_outcome": "Trade approval before liquidity interaction"
+  },
+  {
+    "case_id": "NC-002",
+    "category": "Missing higher-timeframe context",
+    "input_summary": "Lower-timeframe candle pattern appears, but no higher-timeframe structure is provided.",
+    "agent_outputs": {
+      "market_context": "No higher-timeframe trend, range, or structure level supplied.",
+      "liquidity": "Intraday level named without broader context.",
+      "confirmation": "One candle closes green.",
+      "risk_manager": "Risk is numerically bounded."
+    },
+    "expected_decision": "NO_TRADE",
+    "expected_gate_status": "NO_TRADE_RECORDED",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Higher-timeframe context is missing.",
+    "expected_journal_note": "No-trade because the setup lacks higher-timeframe alignment.",
+    "why_no_trade_is_correct": "The system requires context before treating a lower-timeframe signal as meaningful.",
+    "prohibited_outcome": "Approval from lower-timeframe signal alone"
+  },
+  {
+    "case_id": "NC-003",
+    "category": "Generic higher-timeframe context",
+    "input_summary": "Proposal says the higher timeframe is bullish without naming structure or levels.",
+    "agent_outputs": {
+      "market_context": "Market looks bullish.",
+      "liquidity": "Liquidity is somewhere above.",
+      "confirmation": "Momentum feels positive.",
+      "risk_manager": "Risk is below maximum."
+    },
+    "expected_decision": "NO_TRADE",
+    "expected_gate_status": "NO_TRADE_RECORDED",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Higher-timeframe context is generic.",
+    "expected_journal_note": "No-trade because directional bias is not enough evidence.",
+    "why_no_trade_is_correct": "Capital is preserved when context cannot be tied to observable structure.",
+    "prohibited_outcome": "Approval from generic directional bias"
+  },
+  {
+    "case_id": "NC-004",
+    "category": "Weak liquidity location",
+    "input_summary": "Trade idea references a minor intraday midpoint as the main liquidity location.",
+    "agent_outputs": {
+      "market_context": "Range is mixed.",
+      "liquidity": "Minor midpoint is visible but not a strong sweep, high, low, or imbalance.",
+      "confirmation": "Small bounce from midpoint.",
+      "risk_manager": "Risk is fixed."
+    },
+    "expected_decision": "NO_TRADE",
+    "expected_gate_status": "NO_TRADE_RECORDED",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Liquidity location is too weak for approval.",
+    "expected_journal_note": "No-trade because the level is not meaningful enough.",
+    "why_no_trade_is_correct": "A weak level does not justify using risk even when stop size is valid.",
+    "prohibited_outcome": "Approval from minor midpoint reaction"
+  },
+  {
+    "case_id": "NC-005",
+    "category": "Vague liquidity language",
+    "input_summary": "Proposal says liquidity is nearby but does not name a price, level, or event.",
+    "agent_outputs": {
+      "market_context": "Context is plausible.",
+      "liquidity": "Liquidity nearby.",
+      "confirmation": "Potential reaction.",
+      "risk_manager": "Risk is bounded."
+    },
+    "expected_decision": "NO_TRADE",
+    "expected_gate_status": "NO_TRADE_RECORDED",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Liquidity language is vague.",
+    "expected_journal_note": "No-trade because the liquidity location cannot be audited.",
+    "why_no_trade_is_correct": "The system cannot evaluate a level that is not specified.",
+    "prohibited_outcome": "Approval from unnamed liquidity"
+  },
+  {
+    "case_id": "NC-006",
+    "category": "Vague confirmation",
+    "input_summary": "Proposal uses 'looks good' as confirmation after price approaches a level.",
+    "agent_outputs": {
+      "market_context": "Context is acceptable but not decisive.",
+      "liquidity": "Prior low is identified.",
+      "confirmation": "Looks good.",
+      "risk_manager": "Risk is fixed."
+    },
+    "expected_decision": "NO_TRADE",
+    "expected_gate_status": "NO_TRADE_RECORDED",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Confirmation is vague and not rule-based.",
+    "expected_journal_note": "No-trade because confirmation lacks observable criteria.",
+    "why_no_trade_is_correct": "Waiting is correct until confirmation can be described objectively.",
+    "prohibited_outcome": "Approval from subjective confirmation"
+  },
+  {
+    "case_id": "NC-007",
+    "category": "Non-observable confirmation",
+    "input_summary": "Confirmation depends on assumed institutional buying that is not visible in the data.",
+    "agent_outputs": {
+      "market_context": "Context is mixed.",
+      "liquidity": "Prior high is nearby.",
+      "confirmation": "Large buyers are probably stepping in.",
+      "risk_manager": "Risk is numerically valid."
+    },
+    "expected_decision": "NO_TRADE",
+    "expected_gate_status": "NO_TRADE_RECORDED",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Confirmation is non-observable.",
+    "expected_journal_note": "No-trade because hidden participant assumptions are not evidence.",
+    "why_no_trade_is_correct": "The process requires observable price behavior, not inferred intent.",
+    "prohibited_outcome": "Approval from hidden-buyer assumption"
+  },
+  {
+    "case_id": "NC-008",
+    "category": "Generic thesis",
+    "input_summary": "Thesis says trend continuation may happen if momentum continues.",
+    "agent_outputs": {
+      "market_context": "Trend may continue.",
+      "liquidity": "A level exists.",
+      "confirmation": "Momentum may continue.",
+      "risk_manager": "Risk is fixed."
+    },
+    "expected_decision": "NO_TRADE",
+    "expected_gate_status": "NO_TRADE_RECORDED",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Thesis is generic.",
+    "expected_journal_note": "No-trade because the thesis is not specific enough for review.",
+    "why_no_trade_is_correct": "Generic thesis quality cannot justify approval.",
+    "prohibited_outcome": "Approval from reusable trend continuation language"
+  },
+  {
+    "case_id": "NC-009",
+    "category": "Thesis reusable for any symbol",
+    "input_summary": "Proposal text could apply to any ticker and does not mention symbol-specific behavior.",
+    "agent_outputs": {
+      "market_context": "The asset may move higher after consolidation.",
+      "liquidity": "Liquidity is around recent levels.",
+      "confirmation": "A reaction is possible.",
+      "risk_manager": "Risk is below limit."
+    },
+    "expected_decision": "NO_TRADE",
+    "expected_gate_status": "NO_TRADE_RECORDED",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Thesis is reusable for any symbol.",
+    "expected_journal_note": "No-trade because the idea lacks symbol-specific evidence.",
+    "why_no_trade_is_correct": "No-trade is correct when the idea is template language.",
+    "prohibited_outcome": "Approval from symbol-agnostic thesis"
+  },
+  {
+    "case_id": "NC-010",
+    "category": "Risk valid but setup weak",
+    "input_summary": "Stop and target are valid, but context, liquidity, and confirmation are all mediocre.",
+    "agent_outputs": {
+      "market_context": "Context is only somewhat aligned.",
+      "liquidity": "Location is not strong.",
+      "confirmation": "Reaction is small and unclear.",
+      "risk_manager": "Risk per share and maximum loss are valid."
+    },
+    "expected_decision": "NO_TRADE",
+    "expected_gate_status": "NO_TRADE_RECORDED",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Risk validity does not overcome weak setup quality.",
+    "expected_journal_note": "No-trade because valid risk is not sufficient for trade quality.",
+    "why_no_trade_is_correct": "Capital preservation requires setup quality, not only bounded loss.",
+    "prohibited_outcome": "Approval because risk math is valid"
+  },
+  {
+    "case_id": "NC-011",
+    "category": "Missing higher-timeframe context",
+    "input_summary": "Trade proposal asks for approval using only one-minute price action.",
+    "agent_outputs": {
+      "market_context": "Higher-timeframe context omitted.",
+      "liquidity": "Intraday high named.",
+      "confirmation": "Break of one-minute candle.",
+      "risk_manager": "Risk is valid."
+    },
+    "expected_decision": "REJECT",
+    "expected_gate_status": "REJECTED_BEFORE_APPROVAL",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Missing higher-timeframe context blocks setup validity.",
+    "expected_journal_note": "Rejected because lower-timeframe action was not aligned to broader structure.",
+    "why_no_trade_is_correct": "No-trade prevents acting on isolated noise.",
+    "prohibited_outcome": "Approval without higher-timeframe review"
+  },
+  {
+    "case_id": "NC-012",
+    "category": "Generic higher-timeframe context",
+    "input_summary": "Proposal states 'daily looks supportive' without levels or structure.",
+    "agent_outputs": {
+      "market_context": "Daily looks supportive.",
+      "liquidity": "Recent high is a possible magnet.",
+      "confirmation": "Small reclaim noted.",
+      "risk_manager": "Risk is valid."
+    },
+    "expected_decision": "REJECT",
+    "expected_gate_status": "REJECTED_BEFORE_APPROVAL",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Higher-timeframe context is generic and unauditable.",
+    "expected_journal_note": "Rejected because context lacked named structure.",
+    "why_no_trade_is_correct": "Waiting is better than approving vague context.",
+    "prohibited_outcome": "Approval from generic context"
+  },
+  {
+    "case_id": "NC-013",
+    "category": "Weak liquidity location",
+    "input_summary": "Proposal treats a low-volume shelf as strong liquidity.",
+    "agent_outputs": {
+      "market_context": "Range is unresolved.",
+      "liquidity": "Low-volume shelf is proposed as liquidity.",
+      "confirmation": "Small candle closes above shelf.",
+      "risk_manager": "Risk is valid."
+    },
+    "expected_decision": "REJECT",
+    "expected_gate_status": "REJECTED_BEFORE_APPROVAL",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Liquidity location is weak.",
+    "expected_journal_note": "Rejected because the proposed location was not a strong liquidity area.",
+    "why_no_trade_is_correct": "No-trade avoids spending risk on marginal levels.",
+    "prohibited_outcome": "Approval from weak liquidity"
+  },
+  {
+    "case_id": "NC-014",
+    "category": "Vague liquidity language",
+    "input_summary": "Proposal says a liquidity grab probably happened without naming the swept level.",
+    "agent_outputs": {
+      "market_context": "Context is acceptable.",
+      "liquidity": "Liquidity grab probably happened.",
+      "confirmation": "Reversal may be starting.",
+      "risk_manager": "Risk is valid."
+    },
+    "expected_decision": "REJECT",
+    "expected_gate_status": "REJECTED_BEFORE_APPROVAL",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Liquidity event is not specific.",
+    "expected_journal_note": "Rejected because the swept level was not identified.",
+    "why_no_trade_is_correct": "No-trade is correct when the central liquidity claim cannot be checked.",
+    "prohibited_outcome": "Approval from vague liquidity claim"
+  },
+  {
+    "case_id": "NC-015",
+    "category": "Vague confirmation",
+    "input_summary": "Proposal requests approval because the chart feels ready.",
+    "agent_outputs": {
+      "market_context": "Context has partial alignment.",
+      "liquidity": "Prior low is identified.",
+      "confirmation": "Chart feels ready.",
+      "risk_manager": "Risk is valid."
+    },
+    "expected_decision": "REJECT",
+    "expected_gate_status": "REJECTED_BEFORE_APPROVAL",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Confirmation is vague.",
+    "expected_journal_note": "Rejected because confirmation was not observable.",
+    "why_no_trade_is_correct": "No-trade is correct until confirmation is rule-based.",
+    "prohibited_outcome": "Approval from feeling-based confirmation"
+  },
+  {
+    "case_id": "NC-016",
+    "category": "Non-observable confirmation",
+    "input_summary": "Proposal says confirmation is valid because sellers are trapped, but no price behavior shows it.",
+    "agent_outputs": {
+      "market_context": "Context is mixed.",
+      "liquidity": "Prior low is nearby.",
+      "confirmation": "Sellers are probably trapped.",
+      "risk_manager": "Risk is valid."
+    },
+    "expected_decision": "REJECT",
+    "expected_gate_status": "REJECTED_BEFORE_APPROVAL",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Confirmation relies on non-observable assumptions.",
+    "expected_journal_note": "Rejected because trap language was unsupported by observable behavior.",
+    "why_no_trade_is_correct": "The system must wait for visible evidence.",
+    "prohibited_outcome": "Approval from inferred participant behavior"
+  },
+  {
+    "case_id": "NC-017",
+    "category": "Generic thesis",
+    "input_summary": "Proposal thesis says the market can continue after a pullback.",
+    "agent_outputs": {
+      "market_context": "Market can continue.",
+      "liquidity": "Pullback area noted.",
+      "confirmation": "Bounce attempt appears.",
+      "risk_manager": "Risk is valid."
+    },
+    "expected_decision": "REJECT",
+    "expected_gate_status": "REJECTED_BEFORE_APPROVAL",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Thesis is generic.",
+    "expected_journal_note": "Rejected because thesis could not support later review.",
+    "why_no_trade_is_correct": "No-trade is better than acting on a generic continuation idea.",
+    "prohibited_outcome": "Approval from generic thesis"
+  },
+  {
+    "case_id": "NC-018",
+    "category": "Thesis reusable for any symbol",
+    "input_summary": "Proposal omits any ticker-specific structure, catalyst, session behavior, or level.",
+    "agent_outputs": {
+      "market_context": "Asset may trend.",
+      "liquidity": "Recent liquidity is relevant.",
+      "confirmation": "Momentum may resume.",
+      "risk_manager": "Risk is valid."
+    },
+    "expected_decision": "REJECT",
+    "expected_gate_status": "REJECTED_BEFORE_APPROVAL",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Thesis is reusable for any symbol.",
+    "expected_journal_note": "Rejected because the thesis was not tied to the instrument.",
+    "why_no_trade_is_correct": "No-trade avoids template-driven approval.",
+    "prohibited_outcome": "Approval from reusable thesis"
+  },
+  {
+    "case_id": "NC-019",
+    "category": "Risk valid but setup weak",
+    "input_summary": "Proposal has fixed risk and reward/risk, but setup evidence is weak across agents.",
+    "agent_outputs": {
+      "market_context": "Context is not clearly aligned.",
+      "liquidity": "Location is acceptable but not strong.",
+      "confirmation": "Confirmation is weak.",
+      "risk_manager": "Risk parameters are valid."
+    },
+    "expected_decision": "REJECT",
+    "expected_gate_status": "REJECTED_BEFORE_APPROVAL",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Risk is valid but setup quality is weak.",
+    "expected_journal_note": "Rejected because bounded loss does not create a valid trade.",
+    "why_no_trade_is_correct": "The default decision remains no-trade when quality is mediocre.",
+    "prohibited_outcome": "Approval based only on risk limits"
+  },
+  {
+    "case_id": "NC-020",
+    "category": "Forced trade behavior",
+    "input_summary": "Proposal argues that a trade should be found because there have been no trades today.",
+    "agent_outputs": {
+      "market_context": "Context is mixed.",
+      "liquidity": "No strong level identified.",
+      "confirmation": "No clear confirmation.",
+      "risk_manager": "Risk could be made small."
+    },
+    "expected_decision": "REJECT",
+    "expected_gate_status": "REJECTED_BEFORE_APPROVAL",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Forced trade behavior detected.",
+    "expected_journal_note": "Rejected because desire for activity is not a setup.",
+    "why_no_trade_is_correct": "No-trade protects the system from activity bias.",
+    "prohibited_outcome": "Approval because the system has been inactive"
+  },
+  {
+    "case_id": "NC-021",
+    "category": "Specialist agent rubber-stamping",
+    "input_summary": "All specialist agents approve using the same sentence and no role-specific evidence.",
+    "agent_outputs": {
+      "market_context": "Approved, setup looks good.",
+      "liquidity": "Approved, setup looks good.",
+      "confirmation": "Approved, setup looks good.",
+      "risk_manager": "Approved, setup looks good."
+    },
+    "expected_decision": "BLOCK_HUMAN_APPROVAL",
+    "expected_gate_status": "BLOCKED_AT_HUMAN_APPROVAL",
+    "expected_score_band": "FAIL",
+    "expected_rejection_reason": "Specialist agents rubber-stamped without independent reasoning.",
+    "expected_journal_note": "Blocked because agent outputs were repetitive and not role-specific.",
+    "why_no_trade_is_correct": "No-trade is correct when agent separation collapses.",
+    "prohibited_outcome": "Human approval from repeated agent text"
+  },
+  {
+    "case_id": "NC-022",
+    "category": "Specialist agent rubber-stamping",
+    "input_summary": "Trade Proposal Agent upgrades weak evidence after specialists only provide shallow agreement.",
+    "agent_outputs": {
+      "market_context": "Fine.",
+      "liquidity": "Fine.",
+      "confirmation": "Fine.",
+      "trade_proposal": "All agents agree, proposal ready."
+    },
+    "expected_decision": "BLOCK_HUMAN_APPROVAL",
+    "expected_gate_status": "BLOCKED_AT_HUMAN_APPROVAL",
+    "expected_score_band": "FAIL",
+    "expected_rejection_reason": "Proposal converts shallow agreement into approval readiness.",
+    "expected_journal_note": "Blocked because agreement lacked evidence.",
+    "why_no_trade_is_correct": "No-trade preserves role accountability.",
+    "prohibited_outcome": "Approval from shallow specialist agreement"
+  },
+  {
+    "case_id": "NC-023",
+    "category": "Human approval rubber-stamping",
+    "input_summary": "Human approval repeats the gate score and does not explain why no-trade is worse.",
+    "agent_outputs": {
+      "evaluation_gate": "Score appears passable.",
+      "human_approval": "Approved because gate score is passable.",
+      "risk_manager": "Risk is valid.",
+      "journal": "Journal is present but thin."
+    },
+    "expected_decision": "BLOCK_HUMAN_APPROVAL",
+    "expected_gate_status": "BLOCKED_AT_HUMAN_APPROVAL",
+    "expected_score_band": "FAIL",
+    "expected_rejection_reason": "Human approval rubber-stamping detected.",
+    "expected_journal_note": "Blocked because human review did not independently challenge the setup.",
+    "why_no_trade_is_correct": "No-trade is correct when human accountability is not demonstrated.",
+    "prohibited_outcome": "Approval from copied gate output"
+  },
+  {
+    "case_id": "NC-024",
+    "category": "Human approval rubber-stamping",
+    "input_summary": "Human review says approved with no discussion of liquidity, confirmation, or invalidation.",
+    "agent_outputs": {
+      "evaluation_gate": "Several dimensions are borderline.",
+      "human_approval": "Approved.",
+      "risk_manager": "Risk is within limit.",
+      "journal": "Journal lacks challenge notes."
+    },
+    "expected_decision": "BLOCK_HUMAN_APPROVAL",
+    "expected_gate_status": "BLOCKED_AT_HUMAN_APPROVAL",
+    "expected_score_band": "FAIL",
+    "expected_rejection_reason": "Human approval lacks independent review.",
+    "expected_journal_note": "Blocked because the reviewer did not document challenge.",
+    "why_no_trade_is_correct": "No-trade is correct until human approval is accountable.",
+    "prohibited_outcome": "Approval from one-word human review"
+  },
+  {
+    "case_id": "NC-025",
+    "category": "Specialist agent rubber-stamping",
+    "input_summary": "Execution Gatekeeper receives a paper request attempt after rubber-stamped approvals.",
+    "agent_outputs": {
+      "market_context": "Approved.",
+      "liquidity": "Approved.",
+      "confirmation": "Approved.",
+      "execution_gatekeeper": "Paper request must be blocked because prior approvals are rubber-stamped."
+    },
+    "expected_decision": "BLOCK_PAPER_REQUEST",
+    "expected_gate_status": "BLOCKED_BEFORE_PAPER_REQUEST",
+    "expected_score_band": "FAIL",
+    "expected_rejection_reason": "Paper request must be blocked after rubber-stamped agent approvals.",
+    "expected_journal_note": "Blocked before paper request because approval chain was invalid.",
+    "why_no_trade_is_correct": "No-trade is correct when the execution gate catches a bad approval path.",
+    "prohibited_outcome": "Paper order request from rubber-stamped approval"
+  },
+  {
+    "case_id": "NC-026",
+    "category": "Journal too weak",
+    "input_summary": "Journal contains only 'valid setup' and omits context, liquidity, confirmation, and invalidation.",
+    "agent_outputs": {
+      "market_context": "Some context exists.",
+      "liquidity": "A level is named.",
+      "confirmation": "Reaction observed.",
+      "journal": "Valid setup."
+    },
+    "expected_decision": "BLOCK_EVALUATION_GATE",
+    "expected_gate_status": "BLOCKED_AT_EVALUATION_GATE",
+    "expected_score_band": "FAIL",
+    "expected_rejection_reason": "Journal is too weak for review.",
+    "expected_journal_note": "Blocked because journal cannot support post-mortem analysis.",
+    "why_no_trade_is_correct": "No-trade is correct when the decision cannot be audited.",
+    "prohibited_outcome": "Approval with unauditable journal"
+  },
+  {
+    "case_id": "NC-027",
+    "category": "Data integrity incomplete",
+    "input_summary": "Dataset fixture omits freshness status for market data used by the proposal.",
+    "agent_outputs": {
+      "data_integrity": "Freshness status missing.",
+      "market_context": "Context depends on unchecked data.",
+      "liquidity": "Level depends on unchecked data.",
+      "risk_manager": "Risk cannot approve without data status."
+    },
+    "expected_decision": "BLOCK_EVALUATION_GATE",
+    "expected_gate_status": "BLOCKED_AT_EVALUATION_GATE",
+    "expected_score_band": "FAIL",
+    "expected_rejection_reason": "Data integrity is incomplete.",
+    "expected_journal_note": "Blocked because data freshness and completeness were not verified.",
+    "why_no_trade_is_correct": "No-trade is correct when source data cannot be trusted.",
+    "prohibited_outcome": "Approval with incomplete data integrity"
+  },
+  {
+    "case_id": "NC-028",
+    "category": "ADLC compliance incomplete",
+    "input_summary": "Proposal lacks traceability to approved scope, autonomy boundaries, and failure modes.",
+    "agent_outputs": {
+      "orchestrator": "Traceability not shown.",
+      "risk_manager": "Cannot confirm scope compliance.",
+      "evaluation_gate": "ADLC requirements incomplete.",
+      "journal": "Journal omits governance reference."
+    },
+    "expected_decision": "BLOCK_EVALUATION_GATE",
+    "expected_gate_status": "BLOCKED_AT_EVALUATION_GATE",
+    "expected_score_band": "FAIL",
+    "expected_rejection_reason": "ADLC compliance is incomplete.",
+    "expected_journal_note": "Blocked because scope and autonomy boundaries were not traceable.",
+    "why_no_trade_is_correct": "No-trade is correct when governance evidence is missing.",
+    "prohibited_outcome": "Approval without ADLC traceability"
+  },
+  {
+    "case_id": "NC-029",
+    "category": "Missing credible invalidation",
+    "input_summary": "Proposal says invalidation is 'if it does not work' without a price or condition.",
+    "agent_outputs": {
+      "market_context": "Context is plausible.",
+      "liquidity": "Specific level is named.",
+      "confirmation": "Observable reaction exists.",
+      "journal": "Invalidation: if it does not work."
+    },
+    "expected_decision": "BLOCK_EVALUATION_GATE",
+    "expected_gate_status": "BLOCKED_AT_EVALUATION_GATE",
+    "expected_score_band": "FAIL",
+    "expected_rejection_reason": "Credible invalidation is missing.",
+    "expected_journal_note": "Blocked because invalidation was not a usable condition.",
+    "why_no_trade_is_correct": "No-trade is correct when the failure condition is undefined.",
+    "prohibited_outcome": "Approval without credible invalidation"
+  },
+  {
+    "case_id": "NC-030",
+    "category": "Evaluation score inflation",
+    "input_summary": "Evaluator assigns a high score despite vague context, weak liquidity, and thin journal evidence.",
+    "agent_outputs": {
+      "market_context": "Generally supportive.",
+      "liquidity": "Liquidity nearby.",
+      "confirmation": "Looks okay.",
+      "evaluation_gate": "High score assigned despite weak evidence."
+    },
+    "expected_decision": "BLOCK_EVALUATION_GATE",
+    "expected_gate_status": "BLOCKED_AT_EVALUATION_GATE",
+    "expected_score_band": "FAIL",
+    "expected_rejection_reason": "Evaluation score is inflated relative to evidence.",
+    "expected_journal_note": "Blocked because scoring must reflect weak evidence.",
+    "why_no_trade_is_correct": "No-trade is correct when score quality is unreliable.",
+    "prohibited_outcome": "Approval from inflated evaluation score"
+  },
+  {
+    "case_id": "NC-031",
+    "category": "Live trading assumption",
+    "input_summary": "Case text assumes a path beyond paper-only scope is available.",
+    "agent_outputs": {
+      "orchestrator": "Scope violation detected.",
+      "risk_manager": "Paper-only boundary prevents this assumption.",
+      "execution_gatekeeper": "Any order path beyond paper-only scope is blocked.",
+      "journal": "Scope violation must be recorded."
+    },
+    "expected_decision": "BLOCK_PAPER_REQUEST",
+    "expected_gate_status": "BLOCKED_BEFORE_PAPER_REQUEST",
+    "expected_score_band": "FAIL",
+    "expected_rejection_reason": "Live trading assumption violates project scope.",
+    "expected_journal_note": "Blocked because the project remains paper-only and offline for this dataset.",
+    "why_no_trade_is_correct": "No-trade is mandatory when scope assumptions violate governance.",
+    "prohibited_outcome": "Non-paper execution path proceeds"
+  },
+  {
+    "case_id": "NC-032",
+    "category": "Excessive confidence without evidence",
+    "input_summary": "Proposal says the trade is highly certain but provides only weak context and no strong level.",
+    "agent_outputs": {
+      "market_context": "Context is not decisive.",
+      "liquidity": "No strong level identified.",
+      "confirmation": "Reaction is minor.",
+      "trade_proposal": "Confidence is high."
+    },
+    "expected_decision": "REJECT",
+    "expected_gate_status": "REJECTED_BEFORE_APPROVAL",
+    "expected_score_band": "LOW",
+    "expected_rejection_reason": "Confidence exceeds evidence.",
+    "expected_journal_note": "Rejected because confidence language was unsupported.",
+    "why_no_trade_is_correct": "No-trade counters overconfidence when evidence is thin.",
+    "prohibited_outcome": "Approval from confidence language"
+  },
+  {
+    "case_id": "NC-033",
+    "category": "Journal too weak",
+    "input_summary": "Journal copies the proposal title but omits why the setup should beat no-trade.",
+    "agent_outputs": {
+      "market_context": "Context is partially described.",
+      "liquidity": "Level is named but not explained.",
+      "confirmation": "Confirmation is described briefly.",
+      "journal": "Copied proposal title only."
+    },
+    "expected_decision": "BLOCK_EVALUATION_GATE",
+    "expected_gate_status": "BLOCKED_AT_EVALUATION_GATE",
+    "expected_score_band": "FAIL",
+    "expected_rejection_reason": "Journal omits why no-trade was not selected.",
+    "expected_journal_note": "Blocked because journal evidence does not justify selecting a trade over waiting.",
+    "why_no_trade_is_correct": "No-trade is correct when the record cannot explain why action was necessary.",
+    "prohibited_outcome": "Approval with journal that cannot justify trade over no-trade"
+  }
+]

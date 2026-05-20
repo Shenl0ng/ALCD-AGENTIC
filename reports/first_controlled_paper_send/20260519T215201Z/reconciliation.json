@@ -1,0 +1,54 @@
+{
+  "report": {
+    "reconciliation_id": "reconciliation-execution-result-paper-order-request-paper-market_open-001",
+    "execution_result_id": "execution-result-paper-order-request-paper-market_open-001",
+    "paper_order_request_id": "paper-order-request-paper-market_open-001",
+    "alpaca_order_id": "c7b6b927-7d63-4301-98d5-ab2b574d5e8d",
+    "checked_at": "2026-05-19T13:39:00+00:00",
+    "expected_values": {
+      "broker": "alpaca",
+      "account_mode": "PAPER",
+      "symbol": "SIM",
+      "side": "buy",
+      "quantity": "1",
+      "notional": null,
+      "order_type": "limit",
+      "time_in_force": "day",
+      "alpaca_order_id": "c7b6b927-7d63-4301-98d5-ab2b574d5e8d",
+      "journaled_execution_status": "PAPER_ORDER_SUBMITTED"
+    },
+    "observed_values": {
+      "broker": "alpaca",
+      "account_mode": "PAPER",
+      "symbol": "SIM",
+      "side": "buy",
+      "quantity": "1",
+      "notional": null,
+      "order_type": "limit",
+      "time_in_force": "day",
+      "alpaca_order_id": "c7b6b927-7d63-4301-98d5-ab2b574d5e8d",
+      "order_status": "accepted"
+    },
+    "account_mode": "PAPER",
+    "order_status": "accepted",
+    "match_status": "RECONCILIATION_MATCHED",
+    "mismatch_reasons": [],
+    "final_reconciliation_status": "RECONCILIATION_MATCHED",
+    "journal_entry_reference": "journal-None-paper_order_send_submitted",
+    "adlc_compliance_reference": "PASS",
+    "default_action": "OBSERVE_AND_JOURNAL_ONLY"
+  },
+  "journal_entry": {
+    "timestamp": "2026-05-19T13:34:00+00:00",
+    "routine_name": "post_send_reconciliation",
+    "proposal_id": null,
+    "event_type": "paper_order_reconciliation",
+    "risk_status": "OBSERVE_ONLY",
+    "human_approval_status": "OBSERVE_ONLY",
+    "gatekeeper_status": "OBSERVE_AND_JOURNAL_ONLY",
+    "adlc_status": "PASS",
+    "paper_trading_confirmation": false,
+    "reason_for_final_decision": "RECONCILIATION_MATCHED",
+    "lessons_or_notes": "reconciliation attempted; order status observed=accepted; match status=RECONCILIATION_MATCHED; mismatch reasons=none; no follow-up action taken"
+  }
+}

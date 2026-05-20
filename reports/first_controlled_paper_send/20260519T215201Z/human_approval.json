@@ -1,0 +1,16 @@
+{
+  "approval_id": "approval-paper-market_open-001",
+  "proposal_id": "paper-market_open-001",
+  "created_at": "2026-05-19T13:32:00+00:00",
+  "reviewed_at": "2026-05-19T13:33:00+00:00",
+  "reviewer": "human-reviewer",
+  "approval_state": "HUMAN_APPROVED_FOR_PAPER_ONLY",
+  "approval_notes": "Deterministic human approval fixture for paper-only review.",
+  "paper_only_confirmation": true,
+  "risk_approval_reference": "RISK_APPROVED",
+  "journal_ready_confirmation": true,
+  "adlc_compliance_reference": "PASS",
+  "live_trading_authorized": false,
+  "bypass_risk_manager": false,
+  "bypass_journal_agent": false
+}

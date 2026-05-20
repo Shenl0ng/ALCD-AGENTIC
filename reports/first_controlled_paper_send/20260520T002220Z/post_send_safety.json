@@ -1,0 +1,12 @@
+{
+  "account_state_checked": true,
+  "position_state_checked": true,
+  "follow_up_orders_created": false,
+  "cancel_replace_used": false,
+  "live_trading_touched": false,
+  "execution_flag_disabled_after_test": "subshell_unset; unset parent shell manually",
+  "returned_to_dry_run_only": true,
+  "what_worked": "phase 16 evaluation-gated regression completed through send attempt and artifact writing",
+  "what_failed": "none recorded in workflow artifact",
+  "must_fix_before_next_send": "review artifacts before any next paper send; unset parent PAPER_ORDER_EXECUTION_ENABLED"
+}

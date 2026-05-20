@@ -1,0 +1,21 @@
+{
+  "date": "2026-05-20T02:04:41Z",
+  "mode": "REAL_ALPACA_PAPER_SEND",
+  "paper_execution_enabled": true,
+  "alpaca_account_mode": "PAPER",
+  "live_endpoint_rejected": true,
+  "full_tests_passed": true,
+  "architecture_validation_passed": true,
+  "strategy_evaluation_passed": true,
+  "evaluation_first_gate_passed": true,
+  "negative_case_regression_passed": true,
+  "dry_run_passed": true,
+  "mocked_paper_send_passed": true,
+  "account_status": {
+    "paper_mode": true,
+    "account_read_status": "READ_OK",
+    "account_status": "ACTIVE",
+    "trading_allowed_in_principle": true,
+    "positions_count": 0
+  }
+}

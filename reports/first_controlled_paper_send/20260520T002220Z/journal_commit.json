@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-05-19T13:34:00+00:00",
+  "routine_name": "market_open",
+  "proposal_id": "paper-market_open-001",
+  "event_type": "human_approved_for_paper_only",
+  "risk_status": "RISK_APPROVED",
+  "human_approval_status": "HUMAN_APPROVED_FOR_PAPER_ONLY",
+  "gatekeeper_status": "EXECUTION_BLOCKED",
+  "adlc_status": "PASS",
+  "paper_trading_confirmation": true,
+  "reason_for_final_decision": "Human paper-only approval recorded after evaluation gate passed.",
+  "lessons_or_notes": "Journal commit precedes any paper order request."
+}

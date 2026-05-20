@@ -1,0 +1,37 @@
+{
+  "request": {
+    "paper_order_request_id": "paper-order-request-paper-market_open-001",
+    "proposal_id": "paper-market_open-001",
+    "approval_id": "approval-paper-market_open-001",
+    "journal_entry_id": "journal-paper-market_open-001-human_approved_for_paper_only",
+    "created_at": "2026-05-19T13:35:00+00:00",
+    "expires_at": null,
+    "symbol": "SIM",
+    "side": "long",
+    "order_intent": "paper_order_request_only",
+    "quantity": "1",
+    "notional": null,
+    "order_type": "limit",
+    "time_in_force": "day",
+    "proposed_entry": "100",
+    "stop_loss": "98",
+    "target_1": "104",
+    "target_2": "106",
+    "max_loss_amount": "200",
+    "max_loss_pct_equity": "0.002",
+    "paper_trading_only": true,
+    "broker_execution_allowed": false,
+    "live_trading_allowed": false,
+    "risk_approval_reference": "RISK_APPROVED",
+    "human_approval_reference": "HUMAN_APPROVED_FOR_PAPER_ONLY",
+    "journal_commit_reference": "journal-paper-market_open-001-human_approved_for_paper_only",
+    "adlc_compliance_reference": "PASS",
+    "evaluation_gate_reference": "EVALUATION_GATE_PASSED",
+    "gatekeeper_status": "READY_FOR_PAPER_ORDER_REQUEST",
+    "final_status": "PAPER_ORDER_REQUEST_CREATED"
+  },
+  "validation": {
+    "status": "PASS",
+    "violations": []
+  }
+}

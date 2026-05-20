@@ -1,0 +1,11 @@
+{
+  "journal_reference": "automated-dry-run-journal",
+  "symbol": "SIM",
+  "mode": "DRY_RUN_ONLY",
+  "decision": "REJECT",
+  "final_status": "AUTOMATED_DRY_RUN_BLOCKED",
+  "reason": "Exactly one symbol is required.",
+  "paper_order_request_created": false,
+  "paper_send_readiness": false,
+  "broker_execution_readiness": false
+}

@@ -1,0 +1,11 @@
+{
+  "journal_reference": "automated-dry-run-journal",
+  "symbol": "SIM",
+  "mode": "DRY_RUN_ONLY",
+  "decision": "NO_TRADE",
+  "final_status": "AUTOMATED_DRY_RUN_NO_TRADE",
+  "reason": "No-trade selected by automated dry-run analysis.",
+  "paper_order_request_created": false,
+  "paper_send_readiness": false,
+  "broker_execution_readiness": false
+}

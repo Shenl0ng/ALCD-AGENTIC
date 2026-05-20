@@ -1,0 +1,16 @@
+{
+  "request_id": "paper-order-request-paper-market_open-001",
+  "proposal_id": "paper-market_open-001",
+  "approval_id": "approval-paper-market_open-001",
+  "journal_entry_id": "journal-paper-market_open-001-human_approved_for_paper_only",
+  "paper_mode_confirmation": true,
+  "live_mode_rejection_confirmation": true,
+  "risk_approval_reference": "RISK_APPROVED",
+  "human_approval_reference": "HUMAN_APPROVED_FOR_PAPER_ONLY",
+  "journal_commit_reference": "journal-paper-market_open-001-human_approved_for_paper_only",
+  "adlc_compliance_reference": "PASS",
+  "account_mode_check": "PAPER",
+  "request_expiration_check": "ACTIVE",
+  "final_decision": "PAPER_ORDER_SEND_ALLOWED",
+  "violations": []
+}

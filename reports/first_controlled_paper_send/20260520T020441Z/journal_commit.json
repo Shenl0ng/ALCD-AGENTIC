@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-05-19T13:34:00+00:00",
+  "routine_name": "market_open",
+  "proposal_id": "paper-market_open-001",
+  "event_type": "human_approved_for_paper_only",
+  "risk_status": "RISK_APPROVED",
+  "human_approval_status": "HUMAN_APPROVED_FOR_PAPER_ONLY",
+  "gatekeeper_status": "EXECUTION_BLOCKED",
+  "adlc_status": "PASS",
+  "paper_trading_confirmation": true,
+  "reason_for_final_decision": "Phase 25 V3-gated manual paper-only approval recorded after Strategy Evaluation, Evaluation-First Gate, and Negative Case Regression.",
+  "lessons_or_notes": "Manual limited paper send remains one order, limit, day, <=100 USD notional, paper-only."
+}

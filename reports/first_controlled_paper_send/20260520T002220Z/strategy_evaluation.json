@@ -1,0 +1,28 @@
+{
+  "evaluation_id": "strategy-evaluation-paper-market_open-001",
+  "proposal_id": "paper-market_open-001",
+  "evaluation_score": 2.85,
+  "dimension_scores": {
+    "higher_timeframe_context_quality": 3,
+    "liquidity_location_quality": 3,
+    "session_timing_quality": 3,
+    "entry_confirmation_quality": 3,
+    "fixed_risk_quality": 3,
+    "reward_risk_quality": 3,
+    "journal_readiness": 3,
+    "data_freshness": 3,
+    "data_completeness": 3,
+    "specialist_agent_sequencing": 3,
+    "risk_manager_decision_quality": 3,
+    "no_trade_discipline": 2,
+    "correct_rejection_of_weak_setups": 2
+  },
+  "final_status": "PASS",
+  "rejection_reasons": [],
+  "improvement_recommendations": [
+    "Do not increase notional yet.",
+    "Do not add automation yet."
+  ],
+  "adlc_compliance_status": "PASS",
+  "no_trade_discipline_status": "NO_TRADE_DISCIPLINE_PASS"
+}

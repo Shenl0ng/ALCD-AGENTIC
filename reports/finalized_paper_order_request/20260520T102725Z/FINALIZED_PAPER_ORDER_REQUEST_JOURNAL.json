@@ -1,0 +1,24 @@
+{
+  "paper_order_request_id": "finalized-candidate-paper-market_open-001",
+  "candidate_id": "candidate-paper-market_open-001",
+  "review_id": "review-candidate-paper-market_open-001",
+  "request_status": "PAPER_ORDER_REQUEST_FINALIZED",
+  "human_review_status": "HUMAN_REVIEW_APPROVED_FOR_PAPER_REQUEST",
+  "gate_references": {
+    "strategy_evaluation_reference": "strategy-evaluation-paper-market_open-001",
+    "evaluation_gate_reference": "evaluation-gate-paper-market_open-001",
+    "negative_case_regression_reference": "negative-case-regression-pass",
+    "risk_reference": "risk-dry-run-paper-market_open-001",
+    "journal_reference": "automated-dry-run-journal",
+    "human_review_reference": "review-candidate-paper-market_open-001"
+  },
+  "paper_trading_only": true,
+  "manual_execution_confirmation_required": true,
+  "broker_execution_allowed": false,
+  "live_trading_allowed": false,
+  "final_status": "PAPER_ORDER_REQUEST_FINALIZED",
+  "reason": "Finalized Paper Order Request created as an inert artifact only.",
+  "manual_execution_confirmation_created": false,
+  "order_sent": false,
+  "broker_execution_readiness": false
+}
