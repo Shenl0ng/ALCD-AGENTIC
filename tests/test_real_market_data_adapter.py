@@ -6,12 +6,15 @@ import unittest
 from pathlib import Path
 
 from runtime.market_data import (
+    MOCK_MARKET_DATA_FIXTURES,
+    MarketDataSnapshot,
     MockMarketDataAdapter,
     RealMarketDataAdapter,
     RealMarketDataConfig,
     RealMarketDataMissingCredentialsError,
     RealMarketDataSafetyError,
     RealMarketDataValidationError,
+    load_real_market_data_config,
     validate_market_data,
 )
 
@@ -38,6 +41,36 @@ class RealMarketDataAdapterTests(unittest.TestCase):
 
         self.assertTrue(validation.passed)
         self.assertEqual(validation.data_source, "deterministic_mock")
+        self.assertIn("fresh", MOCK_MARKET_DATA_FIXTURES)
+
+    def test_real_market_data_adapter_exists(self) -> None:
+        self.assertTrue(RealMarketDataAdapter)
+        self.assertTrue(MockMarketDataAdapter)
+
+    def test_loads_config_from_environment_without_creating_env_file(self) -> None:
+        with adapter_context() as ctx:
+            config = load_real_market_data_config(
+                environ={
+                    "MARKET_DATA_PROVIDER": "alpaca",
+                    "MARKET_DATA_SYMBOL": "AAPL",
+                    "MARKET_DATA_TIMEFRAME": "1m",
+                    "MARKET_DATA_MAX_AGE_SECONDS": "60",
+                    "MARKET_DATA_REQUIRE_SPREAD": "true",
+                    "MARKET_DATA_REQUIRE_VOLUME": "true",
+                    "ALPACA_PAPER": "true",
+                    "ALPACA_API_KEY_ID": "key-id",
+                    "ALPACA_API_SECRET_KEY": "secret-key",
+                },
+                watchlist_path=ctx.watchlist_path,
+                report_root=ctx.report_root,
+            )
+
+            self.assertEqual(config.provider, "alpaca")
+            self.assertEqual(config.symbols, ("AAPL",))
+            self.assertEqual(config.timeframe, "1m")
+            self.assertEqual(config.max_age, timedelta(seconds=60))
+            self.assertTrue(config.require_spread)
+            self.assertTrue(config.require_volume)
 
     def test_accepts_exactly_one_approved_symbol(self) -> None:
         with adapter_context() as ctx:
@@ -65,7 +98,21 @@ class RealMarketDataAdapterTests(unittest.TestCase):
         with adapter_context() as ctx:
             adapter = RealMarketDataAdapter(ctx.config(symbols=()))
 
-            with self.assertRaisesRegex(RealMarketDataValidationError, "missing_symbol"):
+            with self.assertRaisesRegex(RealMarketDataValidationError, "missing_configured_symbol"):
+                adapter.load_snapshot("market_open")
+
+    def test_rejects_missing_provider(self) -> None:
+        with adapter_context() as ctx:
+            adapter = RealMarketDataAdapter(ctx.config(provider=""))
+
+            with self.assertRaisesRegex(RealMarketDataValidationError, "missing_provider"):
+                adapter.load_snapshot("market_open")
+
+    def test_rejects_unsupported_provider(self) -> None:
+        with adapter_context() as ctx:
+            adapter = RealMarketDataAdapter(ctx.config(provider="unsupported"))
+
+            with self.assertRaisesRegex(RealMarketDataSafetyError, "unsupported_provider"):
                 adapter.load_snapshot("market_open")
 
     def test_rejects_missing_watchlist_approval(self) -> None:
@@ -101,6 +148,23 @@ class RealMarketDataAdapterTests(unittest.TestCase):
             with self.assertRaisesRegex(RealMarketDataValidationError, "missing_timeframe"):
                 adapter.load_snapshot("market_open")
 
+    def test_rejects_missing_session(self) -> None:
+        with adapter_context() as ctx:
+            adapter = RealMarketDataAdapter(ctx.config(session=""))
+
+            with self.assertRaisesRegex(RealMarketDataValidationError, "missing_session"):
+                adapter.load_snapshot("market_open")
+
+    def test_rejects_missing_source(self) -> None:
+        with adapter_context() as ctx:
+            adapter = RealMarketDataAdapter(
+                ctx.config(source=""),
+                http_client=FakeReadOnlyHttpClient(),
+            )
+
+            with self.assertRaisesRegex(RealMarketDataValidationError, "missing_source"):
+                adapter.load_snapshot("market_open")
+
     def test_rejects_missing_spread_when_required(self) -> None:
         with adapter_context() as ctx:
             payload = valid_payload(include_quote=False)
@@ -132,6 +196,15 @@ class RealMarketDataAdapterTests(unittest.TestCase):
 
             with self.assertRaisesRegex(RealMarketDataSafetyError, "alpaca_order_endpoint"):
                 adapter.load_snapshot("market_open")
+
+    def test_rejects_execution_enabled_for_data_only_run(self) -> None:
+        self.assert_execution_flag_blocks("PAPER_ORDER_EXECUTION_ENABLED")
+
+    def test_rejects_automated_send_enabled_for_data_only_run(self) -> None:
+        self.assert_execution_flag_blocks("PAPER_AUTOMATED_SEND_ENABLED")
+
+    def test_rejects_accelerated_soak_enabled_for_data_only_run(self) -> None:
+        self.assert_execution_flag_blocks("PAPER_SOAK_TEST_ACCELERATED")
 
     def test_rejects_missing_api_keys_for_real_provider(self) -> None:
         with adapter_context() as ctx:
@@ -166,10 +239,15 @@ class RealMarketDataAdapterTests(unittest.TestCase):
             adapter.load_snapshot("market_open")
 
             report = latest_report_text(ctx.report_root)
+            self.assertIn("provider: alpaca", report)
+            self.assertIn("spread availability: true", report)
+            self.assertIn("volume availability: true", report)
+            self.assertIn("REAL_MARKET_DATA_LOADED", report)
             self.assertIn("No order was sent.", report)
             self.assertIn("Live trading remains unsupported.", report)
             self.assertIn("This adapter is read-only.", report)
-            self.assertIn("broker execution readiness: false", report)
+            self.assertIn("Mock fixtures remain available for tests.", report)
+            self.assertIn("broker execution readiness not created: true", report)
 
     def test_no_order_api_method_exists_or_is_called(self) -> None:
         with adapter_context() as ctx:
@@ -184,6 +262,28 @@ class RealMarketDataAdapterTests(unittest.TestCase):
             self.assertFalse(hasattr(client, "delete"))
             self.assertEqual(len(client.urls), 1)
             self.assertNotIn("orders", client.urls[0].lower())
+
+    def test_no_broker_execution_readiness_is_created(self) -> None:
+        with adapter_context() as ctx:
+            snapshot = RealMarketDataAdapter(
+                ctx.config(),
+                http_client=FakeReadOnlyHttpClient(),
+            ).load_snapshot("market_open")
+
+            validation = validate_market_data(snapshot)
+            self.assertIsInstance(snapshot, MarketDataSnapshot)
+            self.assertFalse(snapshot.broker_execution_readiness)
+            self.assertNotIn("broker_execution_readiness_not_allowed", validation.violations)
+
+    def assert_execution_flag_blocks(self, flag_name: str) -> None:
+        with adapter_context() as ctx:
+            adapter = RealMarketDataAdapter(
+                ctx.config(environ={flag_name: "true"}),
+                http_client=FakeReadOnlyHttpClient(),
+            )
+
+            with self.assertRaisesRegex(RealMarketDataSafetyError, flag_name):
+                adapter.load_snapshot("market_open")
 
 
 class adapter_context:
@@ -238,6 +338,7 @@ class adapter_context:
             "base_url": "https://data.alpaca.markets",
             "timeframe": "1m",
             "session": "market_open",
+            "provider": "alpaca",
             "watchlist_path": self.watchlist_path,
             "report_root": self.report_root,
             "api_key_id": self.api_key_id,

@@ -1,0 +1,28 @@
+# Real Market Data Adapter Report
+
+- provider: alpaca
+- symbol: AAPL
+- source: alpaca_market_data_read_only
+- timestamp: MISSING
+- timeframe: 1Min
+- session: market_data_adapter
+- freshness status: UNKNOWN
+- completeness status: UNKNOWN
+- spread availability: false
+- volume availability: false
+- data integrity status: UNKNOWN
+- live endpoint rejected: true
+- order API not used: true
+- secrets not printed: true
+- broker execution readiness not created: true
+- final status: REAL_MARKET_DATA_INVALID
+- reason: missing_watchlist_approval
+- No order was sent.
+- No proposal was created.
+- No candidate was created.
+- No Human Review was created.
+- No Paper Send Preflight was created.
+- No Alpaca order API was called.
+- Live trading remains unsupported.
+- This adapter is read-only.
+- Mock fixtures remain available for tests.

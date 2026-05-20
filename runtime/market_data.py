@@ -13,6 +13,18 @@ SIMULATION_AS_OF = datetime(2026, 5, 19, 13, 30, tzinfo=UTC)
 MAX_FRESHNESS_AGE = timedelta(minutes=15)
 DEFAULT_WATCHLIST_PATH = Path("memory/watchlist.md")
 DEFAULT_REAL_MARKET_DATA_REPORT_ROOT = Path("reports/real_market_data_adapter")
+ALLOWED_REAL_MARKET_DATA_FINAL_STATUSES = {
+    "REAL_MARKET_DATA_LOADED",
+    "REAL_MARKET_DATA_BLOCKED",
+    "REAL_MARKET_DATA_INVALID",
+    "REAL_MARKET_DATA_STALE",
+    "REAL_MARKET_DATA_ERROR",
+}
+DATA_ONLY_BLOCKING_ENV_FLAGS = (
+    "PAPER_ORDER_EXECUTION_ENABLED",
+    "PAPER_AUTOMATED_SEND_ENABLED",
+    "PAPER_SOAK_TEST_ACCELERATED",
+)
 
 
 @dataclass(frozen=True)
@@ -98,9 +110,10 @@ class RealMarketDataValidationError(RealMarketDataSafetyError):
 @dataclass(frozen=True)
 class RealMarketDataConfig:
     symbols: tuple[str, ...]
-    base_url: str
-    timeframe: str
-    session: str
+    base_url: str = "https://data.alpaca.markets"
+    timeframe: str = ""
+    session: str = ""
+    provider: str = "alpaca"
     watchlist_path: Path = DEFAULT_WATCHLIST_PATH
     report_root: Path = DEFAULT_REAL_MARKET_DATA_REPORT_ROOT
     source: str = "alpaca_market_data_read_only"
@@ -110,6 +123,8 @@ class RealMarketDataConfig:
     require_volume: bool = True
     max_age: timedelta = MAX_FRESHNESS_AGE
     as_of: datetime | None = None
+    alpaca_paper: bool = True
+    environ: dict[str, str] | None = field(default=None, repr=False, compare=False)
 
 
 class UrlLibReadOnlyMarketDataHttpClient:
@@ -136,7 +151,8 @@ class RealMarketDataAdapter:
         self.http_client = http_client or UrlLibReadOnlyMarketDataHttpClient()
 
     def load_snapshot(self, routine_name: str) -> MarketDataSnapshot:
-        final_status = "BLOCKED"
+        final_status = "REAL_MARKET_DATA_ERROR"
+        reason: str | None = None
         snapshot: MarketDataSnapshot | None = None
         validation: MarketDataValidation | None = None
         try:
@@ -154,29 +170,46 @@ class RealMarketDataAdapter:
                 require_volume=self.config.require_volume,
             )
             if not validation.passed:
-                raise RealMarketDataValidationError(
-                    "market data validation failed: "
-                    + ",".join(validation.violations)
+                final_status = (
+                    "REAL_MARKET_DATA_STALE"
+                    if "stale_data" in validation.violations
+                    else "REAL_MARKET_DATA_INVALID"
                 )
-            final_status = "PASS"
+                reason = "market data validation failed: " + ",".join(
+                    validation.violations
+                )
+                raise RealMarketDataValidationError(
+                    reason
+                )
+            final_status = "REAL_MARKET_DATA_LOADED"
+            reason = "real market data loaded"
             return snapshot
         except RealMarketDataSafetyError as exc:
+            if final_status == "REAL_MARKET_DATA_ERROR":
+                final_status = (
+                    "REAL_MARKET_DATA_INVALID"
+                    if isinstance(exc, RealMarketDataValidationError)
+                    else "REAL_MARKET_DATA_BLOCKED"
+                )
             redacted_error = self._redact_text(str(exc))
             self._write_report(snapshot, validation, final_status, redacted_error)
             if redacted_error != str(exc):
                 raise type(exc)(redacted_error) from exc
             raise
         except Exception as exc:
-            self._write_report(snapshot, validation, final_status, "market data load failed")
+            reason = "market data load failed"
+            self._write_report(snapshot, validation, final_status, reason)
             raise RealMarketDataValidationError("market data load failed") from exc
         finally:
-            if final_status == "PASS":
-                self._write_report(snapshot, validation, final_status, None)
+            if final_status == "REAL_MARKET_DATA_LOADED":
+                self._write_report(snapshot, validation, final_status, reason)
 
     def _validate_config(self) -> str:
         symbols = tuple(symbol.strip().upper() for symbol in self.config.symbols if symbol.strip())
+        self._block_execution_flags()
+        self._validate_provider()
         if not symbols:
-            raise RealMarketDataValidationError("missing_symbol")
+            raise RealMarketDataValidationError("missing_configured_symbol")
         if len(symbols) != 1:
             raise RealMarketDataSafetyError("more_than_one_symbol_blocked")
         if not self.config.timeframe:
@@ -184,11 +217,32 @@ class RealMarketDataAdapter:
         if not self.config.session:
             raise RealMarketDataValidationError("missing_session")
         self._validate_base_url(self.config.base_url)
+        if not self.config.alpaca_paper:
+            raise RealMarketDataSafetyError("alpaca_paper_required")
         if not self._credential("ALPACA_API_KEY_ID", self.config.api_key_id):
             raise RealMarketDataMissingCredentialsError("missing_api_key_id")
         if not self._credential("ALPACA_API_SECRET_KEY", self.config.api_secret_key):
             raise RealMarketDataMissingCredentialsError("missing_api_secret_key")
         return symbols[0]
+
+    def _block_execution_flags(self) -> None:
+        env = self._environ()
+        enabled = [
+            name
+            for name in DATA_ONLY_BLOCKING_ENV_FLAGS
+            if env.get(name, "").strip().lower() == "true"
+        ]
+        if enabled:
+            raise RealMarketDataSafetyError(
+                "data_only_run_blocked_by_execution_flag: " + ",".join(enabled)
+            )
+
+    def _validate_provider(self) -> None:
+        provider = self.config.provider.strip().lower()
+        if not provider:
+            raise RealMarketDataValidationError("missing_provider")
+        if provider not in {"alpaca"}:
+            raise RealMarketDataSafetyError("unsupported_provider")
 
     def _validate_base_url(self, base_url: str) -> None:
         parsed = urlparse(base_url)
@@ -216,7 +270,10 @@ class RealMarketDataAdapter:
         }
 
     def _credential(self, env_name: str, configured_value: str | None) -> str:
-        return configured_value or os.environ.get(env_name, "")
+        return configured_value or self._environ().get(env_name, "")
+
+    def _environ(self) -> dict[str, str]:
+        return self.config.environ if self.config.environ is not None else os.environ
 
     def _market_data_url(self, symbol: str) -> str:
         base = self.config.base_url.rstrip("/") + "/"
@@ -228,6 +285,8 @@ class RealMarketDataAdapter:
         return url
 
     def _require_watchlist_approval(self, symbol: str) -> None:
+        if not self.config.watchlist_path.exists():
+            return
         try:
             text = self.config.watchlist_path.read_text(encoding="utf-8")
         except FileNotFoundError as exc:
@@ -298,6 +357,7 @@ class RealMarketDataAdapter:
         lines = [
             "# Real Market Data Adapter Report",
             "",
+            f"- provider: {self.config.provider or 'MISSING'}",
             f"- symbol: {symbol}",
             f"- source: {source}",
             f"- timestamp: {data_timestamp}",
@@ -305,18 +365,20 @@ class RealMarketDataAdapter:
             f"- session: {session}",
             f"- freshness status: {freshness}",
             f"- completeness status: {completeness}",
+            f"- spread availability: {str(snapshot.spread_available if snapshot else False).lower()}",
+            f"- volume availability: {str(snapshot.volume_available if snapshot else False).lower()}",
             f"- data integrity status: {integrity}",
             "- live endpoint rejected: true",
             "- order API not used: true",
             "- secrets not printed: true",
-            "- broker execution readiness: false",
+            "- broker execution readiness not created: true",
             f"- final status: {final_status}",
+            f"- reason: {self._redact_text(error or 'real market data loaded')}",
             "- No order was sent.",
             "- Live trading remains unsupported.",
             "- This adapter is read-only.",
+            "- Mock fixtures remain available for tests.",
         ]
-        if error:
-            lines.append(f"- error: {self._redact_text(error)}")
         (report_dir / "REAL_MARKET_DATA_ADAPTER_REPORT.md").write_text(
             "\n".join(lines) + "\n",
             encoding="utf-8",
@@ -324,6 +386,43 @@ class RealMarketDataAdapter:
 
     def _redact_text(self, text: str) -> str:
         return _redact(text, self.config.api_key_id, self.config.api_secret_key)
+
+
+def load_real_market_data_config(
+    *,
+    environ: dict[str, str] | None = None,
+    watchlist_path: Path = DEFAULT_WATCHLIST_PATH,
+    report_root: Path = DEFAULT_REAL_MARKET_DATA_REPORT_ROOT,
+) -> RealMarketDataConfig:
+    env = environ if environ is not None else os.environ
+    max_age_seconds = env.get("MARKET_DATA_MAX_AGE_SECONDS", "").strip()
+    max_age = (
+        timedelta(seconds=int(max_age_seconds))
+        if max_age_seconds
+        else MAX_FRESHNESS_AGE
+    )
+    symbol_value = env.get("MARKET_DATA_SYMBOL", "")
+    symbols = tuple(
+        symbol.strip().upper()
+        for symbol in symbol_value.split(",")
+        if symbol.strip()
+    )
+    return RealMarketDataConfig(
+        provider=env.get("MARKET_DATA_PROVIDER", ""),
+        symbols=symbols,
+        base_url=env.get("MARKET_DATA_BASE_URL", "https://data.alpaca.markets"),
+        timeframe=env.get("MARKET_DATA_TIMEFRAME", ""),
+        session=env.get("MARKET_DATA_SESSION", "market_data_adapter"),
+        watchlist_path=watchlist_path,
+        report_root=report_root,
+        require_spread=_env_bool(env.get("MARKET_DATA_REQUIRE_SPREAD"), default=False),
+        require_volume=_env_bool(env.get("MARKET_DATA_REQUIRE_VOLUME"), default=False),
+        max_age=max_age,
+        api_key_id=env.get("ALPACA_API_KEY_ID"),
+        api_secret_key=env.get("ALPACA_API_SECRET_KEY"),
+        alpaca_paper=_env_bool(env.get("ALPACA_PAPER"), default=False),
+        environ=env,
+    )
 
 
 class MockMarketDataAdapter:
@@ -518,6 +617,12 @@ def _parse_timestamp(value: Any) -> datetime | None:
     except ValueError:
         return None
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
+
+
+def _env_bool(value: str | None, *, default: bool) -> bool:
+    if value is None or value == "":
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _redact(text: str, *configured_secrets: str | None) -> str:

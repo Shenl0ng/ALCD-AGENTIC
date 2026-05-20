@@ -1,0 +1,23 @@
+# Real Market Data Adapter Report
+
+- provider: alpaca
+- symbol: AAPL
+- source: alpaca_market_data_read_only
+- timestamp: 2026-05-20T20:00:05.010803+00:00
+- timeframe: 1Min
+- session: v15_read_only_operational_test
+- freshness status: STALE
+- completeness status: COMPLETE
+- spread availability: true
+- volume availability: true
+- data integrity status: FAIL
+- live endpoint rejected: true
+- order API not used: true
+- secrets not printed: true
+- broker execution readiness not created: true
+- final status: REAL_MARKET_DATA_STALE
+- reason: market data validation failed: stale_data
+- No order was sent.
+- Live trading remains unsupported.
+- This adapter is read-only.
+- Mock fixtures remain available for tests.

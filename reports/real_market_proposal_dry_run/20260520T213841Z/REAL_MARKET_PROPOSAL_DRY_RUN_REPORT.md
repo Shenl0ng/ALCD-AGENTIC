@@ -1,0 +1,33 @@
+# Real Market Proposal Dry Run Report
+
+- phase: Phase 57 Real Market-Driven Proposal Dry Run
+- symbol: AAPL
+- source: MISSING
+- timestamp: MISSING
+- timeframe: 1Min
+- session: v15_read_only_operational_test
+- watchlist approval status: APPROVED
+- freshness status: UNKNOWN
+- completeness status: UNKNOWN
+- data integrity status: FAIL
+- strategy decision: REJECT
+- strategy reason: Market data adapter blocked dry run.
+- evaluation status: NOT_RUN
+- evaluation gate status: NOT_RUN
+- negative regression status: NOT_RUN
+- paper_order_request_created: false
+- human_review_requested: false
+- finalized_request_created: false
+- manual_confirmation_requested: false
+- paper_send_preflight_run: false
+- broker_execution_readiness: false
+- paper_order_sent: false
+- live_trading_assumption: false
+- secrets_printed: false
+- order_api_used: false
+- final status: REJECT
+- No order was sent.
+- No paper order candidate was created.
+- No human review item was created.
+- Live trading remains unsupported.
+- This run is read-only and dry-run only.
