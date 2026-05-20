@@ -251,6 +251,158 @@ class AutomatedPaperSendSoakTests(unittest.TestCase):
 
         self.assertTrue(result.flags_disabled_unset_after_run)
 
+    def test_accelerated_cooldown_config_exists(self) -> None:
+        config = soak.AcceleratedSoakCooldownConfig()
+
+        self.assertFalse(config.accelerated_mode_enabled)
+        self.assertEqual(config.production_default_cooldown_seconds, 86400)
+
+    def test_accelerated_cooldown_validator_exists(self) -> None:
+        self.assertTrue(callable(soak.validate_accelerated_cooldown))
+
+    def test_production_default_cooldown_remains_24_hours_when_accelerated_false(self) -> None:
+        config = soak.AcceleratedSoakCooldownConfig()
+
+        self.assertEqual(config.production_default_cooldown_seconds, 24 * 60 * 60)
+
+    def test_accelerated_cooldown_is_disabled_by_default(self) -> None:
+        config = soak.SoakRunConfig()
+
+        self.assertFalse(config.accelerated_cooldown.accelerated_mode_enabled)
+
+    def test_paper_soak_test_accelerated_false_by_default(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            config = soak.accelerated_cooldown_config_from_env()
+
+        self.assertFalse(config.accelerated_mode_enabled)
+
+    def test_accelerated_mode_requires_cooldown_seconds(self) -> None:
+        result = run_accelerated(configured_cooldown_seconds=None)
+
+        self.assert_blocked_with(result, "PAPER_SOAK_TEST_COOLDOWN_SECONDS is required")
+
+    def test_accelerated_cooldown_60_seconds_passes(self) -> None:
+        result = run_accelerated(configured_cooldown_seconds=60, state=soak.SoakRunState(cooldown_satisfied=False))
+
+        self.assertEqual(result.final_status, soak.SOAK_RUN_ALLOWED)
+        self.assertNotIn("cooldown violation", result.block_reasons)
+
+    def test_accelerated_cooldown_59_seconds_blocks(self) -> None:
+        result = run_accelerated(configured_cooldown_seconds=59)
+
+        self.assert_blocked_with(result, "PAPER_SOAK_TEST_COOLDOWN_SECONDS < 60 is blocked")
+
+    def test_accelerated_cooldown_86400_seconds_blocks(self) -> None:
+        result = run_accelerated(configured_cooldown_seconds=86400)
+
+        self.assert_blocked_with(result, "PAPER_SOAK_TEST_COOLDOWN_SECONDS >= 86400 is blocked")
+
+    def test_accelerated_cooldown_86399_seconds_passes(self) -> None:
+        result = run_accelerated(configured_cooldown_seconds=86399, state=soak.SoakRunState(cooldown_satisfied=False))
+
+        self.assertEqual(result.final_status, soak.SOAK_RUN_ALLOWED)
+
+    def test_accelerated_mode_requires_alpaca_paper_true(self) -> None:
+        result = run_accelerated(alpaca_paper=False)
+
+        self.assert_blocked_with(result, "PAPER_SOAK_TEST_ACCELERATED=true requires ALPACA_PAPER=true")
+
+    def test_accelerated_mode_blocks_live_endpoint(self) -> None:
+        result = run_accelerated(live_endpoint_configured=True)
+
+        self.assert_blocked_with(result, "accelerated cooldown blocks live endpoint")
+
+    def test_accelerated_mode_blocks_live_trading_assumption(self) -> None:
+        result = run_accelerated(live_trading_assumption=True)
+
+        self.assert_blocked_with(result, "accelerated cooldown blocks live trading assumption")
+
+    def test_accelerated_mode_blocks_notional_over_100(self) -> None:
+        result = run_accelerated(notional="101")
+
+        self.assert_blocked_with(result, "accelerated cooldown blocks notional > 100 USD")
+
+    def test_accelerated_mode_blocks_more_than_one_symbol(self) -> None:
+        result = run_accelerated(symbols=("SIM", "ALT"))
+
+        self.assert_blocked_with(result, "accelerated cooldown blocks more than one symbol")
+
+    def test_accelerated_mode_blocks_more_than_one_order_per_run(self) -> None:
+        result = run_accelerated(order_count=2)
+
+        self.assert_blocked_with(result, "accelerated cooldown blocks more than one order per run")
+
+    def test_accelerated_mode_blocks_batch_cancel_replace(self) -> None:
+        result = run_accelerated(batch_orders=True, cancel_replace=True)
+
+        self.assert_blocked_with(result, "accelerated cooldown blocks batch/cancel/replace")
+
+    def test_accelerated_mode_blocks_failed_v13_gate(self) -> None:
+        result = run_accelerated(evaluation_gate_status="EVALUATION_GATE_BLOCKED")
+
+        self.assert_blocked_with(result, "accelerated cooldown blocks failed V13 gate")
+
+    def test_accelerated_mode_blocks_missing_previous_reconciliation(self) -> None:
+        result = run_accelerated(state=soak.SoakRunState(previous_reconciliation_exists=False))
+
+        self.assert_blocked_with(result, "accelerated cooldown blocks missing previous reconciliation")
+
+    def test_accelerated_mode_blocks_unresolved_reconciliation_mismatch(self) -> None:
+        result = run_accelerated(state=soak.SoakRunState(previous_reconciliation_matched=False))
+
+        self.assert_blocked_with(result, "accelerated cooldown blocks unresolved reconciliation mismatch")
+
+    def test_accelerated_mode_blocks_missing_previous_post_mortem(self) -> None:
+        result = run_accelerated(state=soak.SoakRunState(previous_post_mortem_exists=False))
+
+        self.assert_blocked_with(result, "accelerated cooldown blocks missing previous post-mortem")
+
+    def test_accelerated_mode_blocks_unresolved_post_mortem_blocker(self) -> None:
+        result = run_accelerated(state=soak.SoakRunState(previous_post_mortem_has_blockers=True))
+
+        self.assert_blocked_with(result, "accelerated cooldown blocks unresolved post-mortem blocker")
+
+    def test_accelerated_mode_blocks_unresolved_issue(self) -> None:
+        result = run_accelerated(state=soak.SoakRunState(unresolved_issue_exists=True))
+
+        self.assert_blocked_with(result, "accelerated cooldown blocks unresolved issue")
+
+    def test_accelerated_mode_blocks_kill_switch_active(self) -> None:
+        result = run_accelerated(state=soak.SoakRunState(kill_switch_active=True))
+
+        self.assert_blocked_with(result, "accelerated cooldown blocks kill switch active")
+
+    def test_soak_reports_include_accelerated_cooldown_fields(self) -> None:
+        report = generated_final_report_text(accelerated_cooldown=accelerated_config())
+
+        for field in (
+            "accelerated_mode_enabled",
+            "configured_cooldown_seconds",
+            "production_default_cooldown_seconds",
+            "accelerated_mode_reason",
+            "alpaca_paper_confirmed",
+            "live_endpoint_rejected",
+            "live_trading_unsupported",
+            "production_cooldown_remains_default",
+            "does_not_authorize_frequency_increase",
+            "does_not_authorize_live_trading",
+        ):
+            self.assertIn(field, report)
+
+    def test_soak_reports_include_required_accelerated_mode_statements(self) -> None:
+        report = generated_final_report_text(accelerated_cooldown=accelerated_config())
+
+        for statement in (
+            "Accelerated cooldown was used for paper soak framework validation only.",
+            "Production/default cooldown remains 24 hours.",
+            "Live trading remains unsupported.",
+            "Increasing notional remains prohibited.",
+            "Multi-symbol automation remains prohibited.",
+            "Batch orders remain prohibited.",
+            "Cancel/replace remains prohibited.",
+        ):
+            self.assertIn(statement, report)
+
     def assert_blocked_with(self, result, reason: str) -> None:
         self.assertEqual(result.final_status, soak.SOAK_RUN_BLOCKED)
         self.assertIn(reason, result.block_reasons)
@@ -261,6 +413,37 @@ class AutomatedPaperSendSoakTests(unittest.TestCase):
 def run_with(**overrides):
     config = soak.valid_soak_config(**overrides)
     return soak.evaluate_soak_run(config)
+
+
+def run_accelerated(
+    *,
+    configured_cooldown_seconds=60,
+    live_trading_assumption=False,
+    used_for_soak_testing=True,
+    **overrides,
+):
+    overrides["accelerated_cooldown"] = accelerated_config(
+        configured_cooldown_seconds=configured_cooldown_seconds,
+        live_trading_assumption=live_trading_assumption,
+        used_for_soak_testing=used_for_soak_testing,
+    )
+    config = soak.valid_soak_config(**overrides)
+    return soak.evaluate_soak_run(config)
+
+
+def accelerated_config(
+    *,
+    configured_cooldown_seconds=60,
+    live_trading_assumption=False,
+    used_for_soak_testing=True,
+):
+    return soak.AcceleratedSoakCooldownConfig(
+        accelerated_mode_enabled=True,
+        configured_cooldown_seconds=configured_cooldown_seconds,
+        accelerated_mode_reason="phase54-test",
+        live_trading_assumption=live_trading_assumption,
+        used_for_soak_testing=used_for_soak_testing,
+    )
 
 
 def sample_record(**overrides):
@@ -276,9 +459,15 @@ def sample_record(**overrides):
     return soak.SoakRunRecord(**values)
 
 
-def generated_final_report_text() -> str:
+def generated_final_report_text(
+    accelerated_cooldown=None,
+) -> str:
     with tempfile.TemporaryDirectory() as tmp:
-        paths = soak.generate_soak_reports(records=(sample_record(),), output_root=Path(tmp))
+        paths = soak.generate_soak_reports(
+            records=(sample_record(),),
+            accelerated_cooldown=accelerated_cooldown,
+            output_root=Path(tmp),
+        )
         return Path(paths.soak_final_report_path or "").read_text(encoding="utf-8")
 
 

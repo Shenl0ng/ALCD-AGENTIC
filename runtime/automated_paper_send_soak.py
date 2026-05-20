@@ -19,6 +19,8 @@ SOAK_FINAL_REPORT_NAME = "SOAK_FINAL_REPORT.md"
 ENV_AUTOMATED_SEND_ENABLED = "PAPER_AUTOMATED_SEND_ENABLED"
 ENV_EXECUTION_ENABLED = "PAPER_ORDER_EXECUTION_ENABLED"
 ENV_ALPACA_PAPER = "ALPACA_PAPER"
+ENV_SOAK_ACCELERATED = "PAPER_SOAK_TEST_ACCELERATED"
+ENV_SOAK_COOLDOWN_SECONDS = "PAPER_SOAK_TEST_COOLDOWN_SECONDS"
 
 PASS = "PASS"
 DRY_RUN_ONLY = "DRY_RUN_ONLY"
@@ -34,6 +36,40 @@ PAPER_ORDER_REQUEST_FINALIZED = "PAPER_ORDER_REQUEST_FINALIZED"
 MANUAL_EXECUTION_CONFIRMED_FOR_PAPER_PREFLIGHT = "MANUAL_EXECUTION_CONFIRMED_FOR_PAPER_PREFLIGHT"
 PAPER_ORDER_SEND_ALLOWED = "PAPER_ORDER_SEND_ALLOWED"
 MAX_NOTIONAL_USD = Decimal("100")
+PRODUCTION_DEFAULT_COOLDOWN_SECONDS = 24 * 60 * 60
+ACCELERATED_MIN_COOLDOWN_SECONDS = 60
+ACCELERATED_MAX_COOLDOWN_SECONDS = PRODUCTION_DEFAULT_COOLDOWN_SECONDS - 1
+ACCELERATED_DEFAULT_TEST_COOLDOWN_SECONDS = 60
+
+
+@dataclass(frozen=True)
+class AcceleratedSoakCooldownConfig:
+    accelerated_mode_enabled: bool = False
+    configured_cooldown_seconds: int | None = None
+    accelerated_mode_reason: str = ""
+    used_for_soak_testing: bool = True
+    live_trading_assumption: bool = False
+    production_default_cooldown_seconds: int = PRODUCTION_DEFAULT_COOLDOWN_SECONDS
+
+    def reporting_fields(
+        self,
+        *,
+        alpaca_paper_confirmed: bool,
+        live_endpoint_rejected: bool,
+    ) -> dict[str, object]:
+        return {
+            "accelerated_mode_enabled": self.accelerated_mode_enabled,
+            "configured_cooldown_seconds": self.configured_cooldown_seconds,
+            "production_default_cooldown_seconds": self.production_default_cooldown_seconds,
+            "accelerated_mode_reason": self.accelerated_mode_reason or "not enabled",
+            "alpaca_paper_confirmed": alpaca_paper_confirmed,
+            "live_endpoint_rejected": live_endpoint_rejected,
+            "live_trading_unsupported": True,
+            "production_cooldown_remains_default": self.production_default_cooldown_seconds
+            == PRODUCTION_DEFAULT_COOLDOWN_SECONDS,
+            "does_not_authorize_frequency_increase": True,
+            "does_not_authorize_live_trading": True,
+        }
 
 
 @dataclass(frozen=True)
@@ -157,6 +193,7 @@ class SoakRunConfig:
     higher_frequency: bool = False
     state: SoakRunState = SoakRunState()
     quality: SoakQualityMetrics = SoakQualityMetrics()
+    accelerated_cooldown: AcceleratedSoakCooldownConfig = AcceleratedSoakCooldownConfig()
 
 
 @dataclass(frozen=True)
@@ -178,9 +215,10 @@ class SoakRunDecision:
     secrets_printed: bool = False
     returned_to_dry_run_only: bool = True
     flags_disabled_unset_after_run: bool = True
+    accelerated_cooldown_fields: dict[str, object] | None = None
 
     def as_dict(self) -> dict[str, object]:
-        return {
+        result = {
             "final_status": self.final_status,
             "block_reasons": list(self.block_reasons),
             "recommendation": self.recommendation,
@@ -199,6 +237,9 @@ class SoakRunDecision:
             "returned_to_dry_run_only": self.returned_to_dry_run_only,
             "flags_disabled_unset_after_run": self.flags_disabled_unset_after_run,
         }
+        if self.accelerated_cooldown_fields is not None:
+            result["accelerated_cooldown_fields"] = self.accelerated_cooldown_fields
+        return result
 
 
 @dataclass(frozen=True)
@@ -272,6 +313,10 @@ def evaluate_soak_run(config: SoakRunConfig | None = None) -> SoakRunDecision:
             consecutive_failures=next_failures,
             consecutive_successes=next_successes,
             secrets_printed=config.secrets_printed,
+            accelerated_cooldown_fields=config.accelerated_cooldown.reporting_fields(
+                alpaca_paper_confirmed=config.alpaca_paper,
+                live_endpoint_rejected=not config.live_endpoint_configured,
+            ),
         )
     finally:
         os.environ.pop(ENV_EXECUTION_ENABLED, None)
@@ -313,6 +358,7 @@ def generate_soak_reports(
     records: tuple[SoakRunRecord, ...] = (),
     state: SoakRunState | None = None,
     quality: SoakQualityMetrics | None = None,
+    accelerated_cooldown: AcceleratedSoakCooldownConfig | None = None,
     soak_period: str = "UNSPECIFIED",
     minimum_period_completed: bool = False,
     output_root: Path = REPORT_ROOT,
@@ -320,6 +366,7 @@ def generate_soak_reports(
 ) -> SoakReportPaths:
     state = state or derive_state_from_records(records)
     quality = quality or derive_quality_from_records(records)
+    accelerated_cooldown = accelerated_cooldown or AcceleratedSoakCooldownConfig()
     recommendation = recommendation_for(
         state=state,
         quality=quality,
@@ -336,9 +383,15 @@ def generate_soak_reports(
     quality_path = report_dir / SOAK_QUALITY_REVIEW_NAME
     final_path = report_dir / SOAK_FINAL_REPORT_NAME
 
-    plan_path.write_text(_render_plan(soak_period=soak_period), encoding="utf-8")
+    plan_path.write_text(
+        _render_plan(soak_period=soak_period, accelerated_cooldown=accelerated_cooldown),
+        encoding="utf-8",
+    )
     registry_path.write_text(_render_registry(records), encoding="utf-8")
-    daily_limits_path.write_text(_render_daily_limits(state=state, records=records), encoding="utf-8")
+    daily_limits_path.write_text(
+        _render_daily_limits(state=state, records=records, accelerated_cooldown=accelerated_cooldown),
+        encoding="utf-8",
+    )
     quality_path.write_text(_render_quality_review(quality=quality), encoding="utf-8")
     final_path.write_text(
         _render_final_report(
@@ -347,6 +400,7 @@ def generate_soak_reports(
             state=state,
             quality=quality,
             recommendation=recommendation,
+            accelerated_cooldown=accelerated_cooldown,
         ),
         encoding="utf-8",
     )
@@ -492,9 +546,81 @@ def _block_reasons(config: SoakRunConfig) -> tuple[str, ...]:
     if config.secrets_printed:
         reasons.append("secret exposure")
     reasons.extend(_constraint_reasons(config))
-    reasons.extend(_state_reasons(config.state, config.notional))
+    reasons.extend(validate_accelerated_cooldown(config.accelerated_cooldown, config))
+    reasons.extend(_state_reasons(config.state, config.notional, config.accelerated_cooldown))
     reasons.extend(_quality_reasons(config.quality))
     return tuple(dict.fromkeys(reasons))
+
+
+def validate_accelerated_cooldown(
+    cooldown: AcceleratedSoakCooldownConfig,
+    config: SoakRunConfig,
+) -> tuple[str, ...]:
+    if not cooldown.accelerated_mode_enabled:
+        return ()
+
+    reasons: list[str] = []
+    seconds = cooldown.configured_cooldown_seconds
+    if not config.alpaca_paper:
+        reasons.append("PAPER_SOAK_TEST_ACCELERATED=true requires ALPACA_PAPER=true")
+    if config.live_endpoint_configured:
+        reasons.append("accelerated cooldown blocks live endpoint")
+    if cooldown.live_trading_assumption:
+        reasons.append("accelerated cooldown blocks live trading assumption")
+    if seconds is None:
+        reasons.append("PAPER_SOAK_TEST_COOLDOWN_SECONDS is required")
+    elif seconds < ACCELERATED_MIN_COOLDOWN_SECONDS:
+        reasons.append("PAPER_SOAK_TEST_COOLDOWN_SECONDS < 60 is blocked")
+    elif seconds >= PRODUCTION_DEFAULT_COOLDOWN_SECONDS:
+        reasons.append("PAPER_SOAK_TEST_COOLDOWN_SECONDS >= 86400 is blocked")
+    if not cooldown.used_for_soak_testing:
+        reasons.append("accelerated cooldown outside soak testing is blocked")
+    if not config.paper_trading_only:
+        reasons.append("accelerated cooldown used for live trading is blocked")
+    if _decimal_or_none(config.notional) is None or _decimal_or_none(config.notional) > MAX_NOTIONAL_USD:
+        reasons.append("accelerated cooldown blocks notional > 100 USD")
+    if len(config.symbols) != 1:
+        reasons.append("accelerated cooldown blocks more than one symbol")
+    if config.order_count != 1:
+        reasons.append("accelerated cooldown blocks more than one order per run")
+    if config.batch_orders or config.cancel_replace:
+        reasons.append("accelerated cooldown blocks batch/cancel/replace")
+    if _v13_gate_failed(config):
+        reasons.append("accelerated cooldown blocks failed V13 gate")
+    if not config.state.previous_reconciliation_exists:
+        reasons.append("accelerated cooldown blocks missing previous reconciliation")
+    if not config.state.previous_reconciliation_matched or config.state.reconciliation_mismatch_exists:
+        reasons.append("accelerated cooldown blocks unresolved reconciliation mismatch")
+    if not config.state.previous_post_mortem_exists:
+        reasons.append("accelerated cooldown blocks missing previous post-mortem")
+    if config.state.previous_post_mortem_has_blockers or config.state.unresolved_post_mortem_blocker:
+        reasons.append("accelerated cooldown blocks unresolved post-mortem blocker")
+    if config.state.unresolved_issue_exists:
+        reasons.append("accelerated cooldown blocks unresolved issue")
+    if config.state.kill_switch_active:
+        reasons.append("accelerated cooldown blocks kill switch active")
+    return tuple(reasons)
+
+
+def _v13_gate_failed(config: SoakRunConfig) -> bool:
+    return any(
+        (
+            config.full_tests_status != PASS,
+            config.architecture_validation_status != PASS,
+            config.v10_full_pipeline_regression_status != PASS,
+            config.automated_paper_send_mocked_regression_status != PASS,
+            config.strategy_evaluation_status != PASS,
+            config.evaluation_gate_status != "EVALUATION_GATE_PASSED",
+            config.negative_case_regression_status != PASS,
+            not config.candidate_from_valid_trade_proposal,
+            config.candidate_status != PAPER_ORDER_CANDIDATE_CREATED,
+            config.human_review_status != HUMAN_REVIEW_APPROVED_FOR_PAPER_REQUEST,
+            config.finalized_request_status != PAPER_ORDER_REQUEST_FINALIZED,
+            config.manual_confirmation_status != MANUAL_EXECUTION_CONFIRMED_FOR_PAPER_PREFLIGHT,
+            config.paper_send_preflight_status != PAPER_ORDER_SEND_ALLOWED,
+            not config.alpaca_paper_account_confirmed,
+        )
+    )
 
 
 def _constraint_reasons(config: SoakRunConfig) -> tuple[str, ...]:
@@ -530,7 +656,11 @@ def _constraint_reasons(config: SoakRunConfig) -> tuple[str, ...]:
     return tuple(reasons)
 
 
-def _state_reasons(state: SoakRunState, notional: str) -> tuple[str, ...]:
+def _state_reasons(
+    state: SoakRunState,
+    notional: str,
+    accelerated_cooldown: AcceleratedSoakCooldownConfig,
+) -> tuple[str, ...]:
     reasons: list[str] = []
     if state.kill_switch_active:
         reasons.append("automation kill switch is active")
@@ -542,7 +672,7 @@ def _state_reasons(state: SoakRunState, notional: str) -> tuple[str, ...]:
     max_daily_notional = _decimal_or_none(state.max_daily_notional) or MAX_NOTIONAL_USD
     if next_notional > max_daily_notional:
         reasons.append("daily notional limit exceeded")
-    if not state.cooldown_satisfied:
+    if not state.cooldown_satisfied and not _accelerated_cooldown_can_satisfy_cooldown(accelerated_cooldown):
         reasons.append("cooldown violation")
     if not state.previous_reconciliation_exists:
         reasons.append("previous reconciliation missing")
@@ -563,6 +693,17 @@ def _state_reasons(state: SoakRunState, notional: str) -> tuple[str, ...]:
     if state.unresolved_post_mortem_blocker:
         reasons.append("unresolved post-mortem blocker blocks soak continuation")
     return tuple(reasons)
+
+
+def _accelerated_cooldown_can_satisfy_cooldown(cooldown: AcceleratedSoakCooldownConfig) -> bool:
+    seconds = cooldown.configured_cooldown_seconds
+    return (
+        cooldown.accelerated_mode_enabled
+        and seconds is not None
+        and ACCELERATED_MIN_COOLDOWN_SECONDS <= seconds <= ACCELERATED_MAX_COOLDOWN_SECONDS
+        and cooldown.used_for_soak_testing
+        and not cooldown.live_trading_assumption
+    )
 
 
 def _quality_reasons(quality: SoakQualityMetrics) -> tuple[str, ...]:
@@ -600,13 +741,25 @@ def _record_safety_violations(records: tuple[SoakRunRecord, ...]) -> tuple[str, 
     return tuple(dict.fromkeys(reasons))
 
 
-def _render_plan(*, soak_period: str) -> str:
+def _render_plan(
+    *,
+    soak_period: str,
+    accelerated_cooldown: AcceleratedSoakCooldownConfig,
+) -> str:
+    fields = accelerated_cooldown.reporting_fields(
+        alpaca_paper_confirmed=True,
+        live_endpoint_rejected=True,
+    )
     return f"""# Soak Test Plan
 
 - Soak period: {soak_period}
 - Maximum submitted paper orders per day: 1
 - Maximum notional per day: <= 100 USD
-- Cooldown rule: must be satisfied before every run
+- Cooldown rule: production/default cooldown remains 24 hours unless explicit paper-only accelerated soak mode is validated
+- accelerated_mode_enabled: {fields["accelerated_mode_enabled"]}
+- configured_cooldown_seconds: {fields["configured_cooldown_seconds"]}
+- production_default_cooldown_seconds: {fields["production_default_cooldown_seconds"]}
+- accelerated_mode_reason: {fields["accelerated_mode_reason"]}
 - Kill switch rule: active kill switch blocks all runs
 - Required V13 gates: all gates must pass before every run
 - Required artifacts per run: registry, daily limits, quality review, final report
@@ -614,6 +767,8 @@ def _render_plan(*, soak_period: str) -> str:
 - Success criteria: all submitted paper orders reconcile matched, every send has post-mortem, no unresolved issues, no live endpoint, no secrets printed
 - Review cadence: after every attempted run and at end of soak
 
+Accelerated cooldown was used for paper soak framework validation only.
+Production/default cooldown remains 24 hours.
 Live trading remains unsupported.
 """
 
@@ -648,20 +803,30 @@ def _render_registry(records: tuple[SoakRunRecord, ...]) -> str:
     return "\n".join(lines)
 
 
-def _render_daily_limits(*, state: SoakRunState, records: tuple[SoakRunRecord, ...]) -> str:
+def _render_daily_limits(
+    *,
+    state: SoakRunState,
+    records: tuple[SoakRunRecord, ...],
+    accelerated_cooldown: AcceleratedSoakCooldownConfig,
+) -> str:
     submitted = sum(1 for record in records if record.submitted)
+    cooldown_compliance = state.cooldown_satisfied or _accelerated_cooldown_can_satisfy_cooldown(accelerated_cooldown)
     return f"""# Soak Daily Limits
 
 - Daily order counter: {state.daily_order_count}
 - Submitted paper orders in registry: {submitted}
 - Daily notional tracker: {state.daily_notional_used}
 - Cooldown tracker: {state.cooldown_satisfied}
+- accelerated_mode_enabled: {accelerated_cooldown.accelerated_mode_enabled}
+- configured_cooldown_seconds: {accelerated_cooldown.configured_cooldown_seconds}
+- production_default_cooldown_seconds: {accelerated_cooldown.production_default_cooldown_seconds}
 - Kill switch status: {"active" if state.kill_switch_active else "inactive"}
 - Daily order limit compliance: {state.daily_order_count <= state.max_daily_orders}
 - Daily notional compliance: {(_decimal_or_none(state.daily_notional_used) or Decimal("0")) <= (_decimal_or_none(state.max_daily_notional) or MAX_NOTIONAL_USD)}
-- Cooldown compliance: {state.cooldown_satisfied}
+- Cooldown compliance: {cooldown_compliance}
 - Any daily limit violation: {state.daily_order_count > state.max_daily_orders}
 
+Production/default cooldown remains 24 hours.
 Live trading remains unsupported.
 """
 
@@ -689,6 +854,7 @@ def _render_final_report(
     state: SoakRunState,
     quality: SoakQualityMetrics,
     recommendation: str,
+    accelerated_cooldown: AcceleratedSoakCooldownConfig,
 ) -> str:
     submitted = tuple(record for record in records if record.submitted)
     blocked = tuple(record for record in records if record.blocked)
@@ -701,6 +867,11 @@ def _render_final_report(
         record.post_mortem_status or "missing"
         for record in submitted
     ] or ["none"]
+    accelerated_fields = accelerated_cooldown.reporting_fields(
+        alpaca_paper_confirmed=True,
+        live_endpoint_rejected=True,
+    )
+    cooldown_compliance = state.cooldown_satisfied or _accelerated_cooldown_can_satisfy_cooldown(accelerated_cooldown)
     return f"""# Soak Final Report
 
 - Soak period: {soak_period}
@@ -711,7 +882,7 @@ def _render_final_report(
 - Post-mortem results: {json.dumps(post_mortem_results)}
 - Daily order limit compliance: {state.daily_order_count <= state.max_daily_orders}
 - Daily notional compliance: {(_decimal_or_none(state.daily_notional_used) or Decimal("0")) <= (_decimal_or_none(state.max_daily_notional) or MAX_NOTIONAL_USD)}
-- Cooldown compliance: {state.cooldown_satisfied}
+- Cooldown compliance: {cooldown_compliance}
 - Kill switch events: {state.kill_switch_active}
 - Unresolved issues: {state.unresolved_issue_exists}
 - Approval-rate analysis: {quality.approval_rate()}
@@ -721,7 +892,19 @@ def _render_final_report(
 - Recommendation: {recommendation}
 - Real Alpaca API called: false
 - Real order sent: false
+- accelerated_mode_enabled: {accelerated_fields["accelerated_mode_enabled"]}
+- configured_cooldown_seconds: {accelerated_fields["configured_cooldown_seconds"]}
+- production_default_cooldown_seconds: {accelerated_fields["production_default_cooldown_seconds"]}
+- accelerated_mode_reason: {accelerated_fields["accelerated_mode_reason"]}
+- alpaca_paper_confirmed: {accelerated_fields["alpaca_paper_confirmed"]}
+- live_endpoint_rejected: {accelerated_fields["live_endpoint_rejected"]}
+- live_trading_unsupported: {accelerated_fields["live_trading_unsupported"]}
+- production_cooldown_remains_default: {accelerated_fields["production_cooldown_remains_default"]}
+- does_not_authorize_frequency_increase: {accelerated_fields["does_not_authorize_frequency_increase"]}
+- does_not_authorize_live_trading: {accelerated_fields["does_not_authorize_live_trading"]}
 
+Accelerated cooldown was used for paper soak framework validation only.
+Production/default cooldown remains 24 hours.
 Live trading remains unsupported.
 Increasing notional remains prohibited.
 Multi-symbol automation remains prohibited.
@@ -774,6 +957,25 @@ def valid_soak_config(**overrides: object) -> SoakRunConfig:
     }
     values.update(overrides)
     return SoakRunConfig(**values)
+
+
+def accelerated_cooldown_config_from_env(
+    *,
+    accelerated_mode_reason: str = "paper soak framework validation",
+) -> AcceleratedSoakCooldownConfig:
+    accelerated = os.environ.get(ENV_SOAK_ACCELERATED, "false").lower() == "true"
+    raw_seconds = os.environ.get(ENV_SOAK_COOLDOWN_SECONDS)
+    seconds = None
+    if raw_seconds is not None:
+        try:
+            seconds = int(raw_seconds)
+        except ValueError:
+            seconds = None
+    return AcceleratedSoakCooldownConfig(
+        accelerated_mode_enabled=accelerated,
+        configured_cooldown_seconds=seconds,
+        accelerated_mode_reason=accelerated_mode_reason if accelerated else "",
+    )
 
 
 def main() -> int:
